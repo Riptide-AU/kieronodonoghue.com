@@ -34,8 +34,16 @@ const { enabled, variant } = BACKGROUND;
         const reduce = matchMedia('(prefers-reduced-motion: reduce)');
 
         let w = 0, h = 0, dpr = 1;
-        let nodes = [], packets = [], cols = [], gridGap = 48, phase = 0;
+        let nodes = [], packets = [], cols = [], vcols = [], gridGap = 48, phase = 0;
         let raf = 0, last = 0;
+
+        // Depth layers for 'vertical-streams' (far -> near). Nearer layers are
+        // sparser, faster, brighter and larger for a parallax sense of depth.
+        const V_LAYERS = [
+          { gap: 17, speed: [16, 34], lw: 1, head: 6, alpha: 0.16, rise: 0.18 },
+          { gap: 24, speed: [30, 60], lw: 1.6, head: 10, alpha: 0.34, rise: 0.14 },
+          { gap: 36, speed: [52, 95], lw: 2.4, head: 15, alpha: 0.6, rise: 0.1 },
+        ];
         const FPS = 30, interval = 1000 / FPS;
 
         function size() {
@@ -72,15 +80,34 @@ const { enabled, variant } = BACKGROUND;
             }));
           } else if (variant === 'grid') {
             packets = Array.from({ length: 7 }, spawnPacket);
+          } else if (variant === 'vertical-streams') {
+            vcols = [];
+            for (let li = 0; li < V_LAYERS.length; li++) {
+              const L = V_LAYERS[li];
+              const n = Math.floor(w / L.gap);
+              for (let i = 0; i < n; i++) {
+                const rising = Math.random() < L.rise;
+                vcols.push({
+                  layer: li,
+                  x: i * L.gap + L.gap / 2 + (Math.random() - 0.5) * 4,
+                  y: Math.random() * h,
+                  dir: rising ? -1 : 1,
+                  speed: L.speed[0] + Math.random() * (L.speed[1] - L.speed[0]),
+                  // Per-column brightness jitter so pulses don't look uniform.
+                  bright: 0.75 + Math.random() * 0.45,
+                });
+              }
+            }
           } else {
-            const gap = 26;
+            // 'streams' — slightly busier than before (more active, a touch faster).
+            const gap = 24;
             const n = Math.floor(w / gap);
             cols = Array.from({ length: n }, (_, i) => ({
               x: i * gap + gap / 2,
               y: Math.random() * h,
-              speed: 18 + Math.random() * 34,
-              len: 6 + Math.floor(Math.random() * 10),
-              active: Math.random() < 0.6,
+              speed: 26 + Math.random() * 44,
+              len: 7 + Math.floor(Math.random() * 11),
+              active: Math.random() < 0.72,
             }));
           }
         }
@@ -160,23 +187,48 @@ const { enabled, variant } = BACKGROUND;
             c.y += c.speed * dt;
             if (c.y - c.len * lineH > h) {
               c.y = -Math.random() * h * 0.3;
-              c.speed = 18 + Math.random() * 34;
-              c.len = 6 + Math.floor(Math.random() * 10);
+              c.speed = 26 + Math.random() * 44;
+              c.len = 7 + Math.floor(Math.random() * 11);
               c.active = Math.random() < 0.85;
             }
             for (let i = 0; i < c.len; i++) {
               const yy = c.y - i * lineH;
               if (yy < 0 || yy > h) continue;
-              const a = (1 - i / c.len) * 0.24;
-              ctx.fillStyle = accent(i === 0 ? 0.55 : a);
+              const a = (1 - i / c.len) * 0.28;
+              ctx.fillStyle = accent(i === 0 ? 0.6 : a);
               ctx.fillRect(c.x, yy, 2, 8);
             }
+          }
+        }
+
+        function drawVerticalStreams(dt) {
+          // Translucent base-coloured wash creates fading trails (data rain)
+          // without a separate per-column trail loop — cheap and smooth.
+          ctx.fillStyle = 'rgba(13, 19, 32, 0.20)';
+          ctx.fillRect(0, 0, w, h);
+          for (const c of vcols) {
+            const L = V_LAYERS[c.layer];
+            c.y += c.dir * c.speed * dt;
+            // Recycle past the edge in the direction of travel.
+            if (c.dir > 0 && c.y - L.head > h) {
+              c.y = -Math.random() * h * 0.4;
+              c.speed = L.speed[0] + Math.random() * (L.speed[1] - L.speed[0]);
+              c.bright = 0.75 + Math.random() * 0.45;
+            } else if (c.dir < 0 && c.y + L.head < 0) {
+              c.y = h + Math.random() * h * 0.4;
+              c.speed = L.speed[0] + Math.random() * (L.speed[1] - L.speed[0]);
+              c.bright = 0.75 + Math.random() * 0.45;
+            }
+            // Bright leading pulse; the wash above turns its path into a trail.
+            ctx.fillStyle = accent(Math.min(L.alpha * c.bright + 0.12, 0.85));
+            ctx.fillRect(c.x - L.lw / 2, c.y, L.lw, L.head);
           }
         }
 
         function frame(dt) {
           if (variant === 'grid') drawGrid(dt);
           else if (variant === 'streams') drawStreams(dt);
+          else if (variant === 'vertical-streams') drawVerticalStreams(dt);
           else drawNetwork(dt);
         }
 
