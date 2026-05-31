@@ -198,10 +198,10 @@ Ideas do not need to be finished essays.
 Purpose: help people and search engines connect Kieron's online presence.
 
 Include:
-- LinkedIn
-- Facebook
+- LinkedIn (https://www.linkedin.com/in/kierono1/)
+- Facebook (https://www.facebook.com/kieron.odonoghue.7)
 - GitHub if available
-- Email/contact option
+- Email/contact option (kieron_o@outlook.com)
 
 ## SEO and Brand Management
 
@@ -330,6 +330,21 @@ Do not describe:
 
 Acceptable wording:
 "I am currently developing my Python, SQL, JavaScript, and CSS skills through practical web application work and personal projects."
+
+## Content Philosophy
+
+This website should favour authenticity over optimisation.
+
+Articles, notes and ideas do not need to be perfectly polished before publication.
+
+The site should encourage publishing:
+- things being learned
+- works in progress
+- experiments
+- reflections
+- project journals
+
+The website is a living record rather than a static portfolio.
 
 ## Initial Build Goal
 
