@@ -129,9 +129,11 @@ const relatedIdeas = (await getCollection('ideas', (i) => !i.data.draft))
     </aside>
 
     <!-- Case-study body (Context, Problem, Approach, Outcome, What I learned) -->
-    <article class="prose min-w-0 max-w-none">
-      <Content />
-    </article>
+    <div class="min-w-0 rounded-2xl border border-border bg-surface p-6 md:p-8">
+      <article class="prose max-w-none">
+        <Content />
+      </article>
+    </div>
   </div>
 
   <!-- RELATED -->

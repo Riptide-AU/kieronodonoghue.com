@@ -75,12 +75,13 @@ const fmt = (d: Date) =>
       )
     }
 
-    <hr class="my-8 border-border" />
-
-    <div class="prose">
-      <Content />
+    <!-- Solid reading surface so body copy stays readable over the animated background. -->
+    <div class="mt-8 rounded-2xl border border-border bg-surface p-6 md:p-8">
+      <div class="prose">
+        <Content />
+      </div>
     </div>
 
-    <p class="mt-12 text-sm text-muted">By Kieron O'Donoghue</p>
+    <p class="mt-8 text-sm text-muted">By Kieron O'Donoghue</p>
   </article>
 </BaseLayout>
