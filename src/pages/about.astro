@@ -1,5 +1,8 @@
 ---
+import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import vulcan from '../assets/images/vulcan.png';
+import sailing from '../assets/images/sailing.png';
 
 // Small structured data keeps the template readable and easy to edit later.
 const atAGlance = [
@@ -52,6 +55,28 @@ const interests = [
   'Web development',
   'Game design',
   'Boats, motorcycles & practical DIY',
+];
+
+// "Beyond work" — personal interests. Authentic and light on detail by design.
+const beyond = [
+  {
+    title: 'Motorcycles',
+    image: vulcan,
+    alt: 'Stylised artwork of a motorcycle',
+    body: 'I enjoy riding and tinkering with motorcycles — practical, mechanical, and a good reason to work with my hands.',
+  },
+  {
+    title: 'Sailing & boats',
+    image: sailing,
+    alt: 'Stylised artwork of a sailing boat on the water',
+    body: 'Time on the water is my reset. Boats are another kind of system to understand, maintain, and get right.',
+  },
+  {
+    title: 'Technology & projects',
+    image: null,
+    alt: '',
+    body: 'Building things for the fun of it — code, automation, and side projects that double as a way to keep learning.',
+  },
 ];
 
 const timeline = [
@@ -192,6 +217,47 @@ const timeline = [
         ))
       }
     </ul>
+  </section>
+
+  <!-- BEYOND WORK -->
+  <section class="mx-auto max-w-5xl px-5 py-10">
+    <h2 class="text-2xl font-semibold tracking-tight text-ink">Beyond work</h2>
+    <p class="mt-3 max-w-2xl text-muted">
+      There's more to me than the professional side. A few of the things I spend
+      time on away from the desk.
+    </p>
+    <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        beyond.map((item) => (
+          <article class="flex flex-col overflow-hidden rounded-xl border border-border bg-surface">
+            {item.image ? (
+              <div class="aspect-[3/2] overflow-hidden border-b border-border">
+                <Image
+                  src={item.image}
+                  alt={item.alt}
+                  widths={[320, 640, 960]}
+                  sizes="(min-width: 1024px) 20rem, (min-width: 640px) 50vw, 100vw"
+                  loading="lazy"
+                  decoding="async"
+                  class="h-full w-full object-cover"
+                />
+              </div>
+            ) : (
+              <div
+                class="flex aspect-[3/2] items-center justify-center border-b border-border bg-accent-soft/40"
+                aria-hidden="true"
+              >
+                <span class="font-mono text-sm text-accent">&lt;/&gt;</span>
+              </div>
+            )}
+            <div class="flex flex-1 flex-col p-5">
+              <h3 class="font-semibold text-ink">{item.title}</h3>
+              <p class="mt-2 text-sm leading-relaxed text-muted">{item.body}</p>
+            </div>
+          </article>
+        ))
+      }
+    </div>
   </section>
 
   <!-- PERSONAL PHILOSOPHY (callout) -->
