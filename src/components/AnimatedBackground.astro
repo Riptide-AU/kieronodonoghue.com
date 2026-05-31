@@ -1,0 +1,218 @@
+---
+import { BACKGROUND } from '../consts';
+
+// Render nothing at all when disabled — no canvas, no script, zero cost.
+const { enabled, variant } = BACKGROUND;
+---
+
+{
+  enabled && (
+    <canvas
+      id="bg-canvas"
+      data-variant={variant}
+      aria-hidden="true"
+      class="pointer-events-none fixed inset-0 -z-10 h-full w-full"
+    />
+  )
+}
+
+{
+  enabled && (
+    <script is:inline>
+      (() => {
+        const canvas = document.getElementById('bg-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Variant from the settings flag, with an optional ?bg= override for previewing.
+        const params = new URLSearchParams(location.search);
+        const variant = params.get('bg') || canvas.dataset.variant || 'network';
+
+        // Muted blue-green accent, matching the site palette.
+        const accent = (a) => 'rgba(92,192,171,' + a + ')';
+        const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+
+        let w = 0, h = 0, dpr = 1;
+        let nodes = [], packets = [], cols = [], gridGap = 48, phase = 0;
+        let raf = 0, last = 0;
+        const FPS = 30, interval = 1000 / FPS;
+
+        function size() {
+          dpr = Math.min(window.devicePixelRatio || 1, 2);
+          w = window.innerWidth;
+          h = window.innerHeight;
+          canvas.width = Math.floor(w * dpr);
+          canvas.height = Math.floor(h * dpr);
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        function spawnPacket() {
+          const horizontal = Math.random() < 0.5;
+          const speed = 30 + Math.random() * 45;
+          const dir = Math.random() < 0.5 ? 1 : -1;
+          if (horizontal) {
+            const row = Math.round((Math.random() * h) / gridGap) * gridGap;
+            return { horizontal: true, x: Math.random() * w, y: row, dir, speed };
+          }
+          const col = Math.round((Math.random() * w) / gridGap) * gridGap;
+          return { horizontal: false, x: col, y: Math.random() * h, dir, speed };
+        }
+
+        function init() {
+          if (variant === 'network') {
+            const count = Math.min(70, Math.floor((w * h) / 24000));
+            nodes = Array.from({ length: count }, () => ({
+              x: Math.random() * w,
+              y: Math.random() * h,
+              vx: (Math.random() - 0.5) * 0.25,
+              vy: (Math.random() - 0.5) * 0.25,
+              r: 1.2 + Math.random() * 1.4,
+              p: Math.random() * Math.PI * 2,
+            }));
+          } else if (variant === 'grid') {
+            packets = Array.from({ length: 7 }, spawnPacket);
+          } else {
+            const gap = 26;
+            const n = Math.floor(w / gap);
+            cols = Array.from({ length: n }, (_, i) => ({
+              x: i * gap + gap / 2,
+              y: Math.random() * h,
+              speed: 18 + Math.random() * 34,
+              len: 6 + Math.floor(Math.random() * 10),
+              active: Math.random() < 0.6,
+            }));
+          }
+        }
+
+        function drawNetwork(dt) {
+          ctx.clearRect(0, 0, w, h);
+          const k = dt * 60;
+          for (const n of nodes) {
+            n.x += n.vx * k; n.y += n.vy * k; n.p += dt * 1.2;
+            if (n.x < 0 || n.x > w) n.vx *= -1;
+            if (n.y < 0 || n.y > h) n.vy *= -1;
+          }
+          const D = 150;
+          for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+              const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
+              const dist = Math.hypot(dx, dy);
+              if (dist < D) {
+                ctx.strokeStyle = accent((1 - dist / D) * 0.16);
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(nodes[i].x, nodes[i].y);
+                ctx.lineTo(nodes[j].x, nodes[j].y);
+                ctx.stroke();
+              }
+            }
+          }
+          for (const n of nodes) {
+            const rr = n.r + Math.sin(n.p) * 0.4;
+            ctx.fillStyle = accent(0.45);
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, rr, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        function drawGrid(dt) {
+          ctx.clearRect(0, 0, w, h);
+          phase += dt * 0.6;
+          for (let y = gridGap; y < h; y += gridGap) {
+            for (let x = gridGap; x < w; x += gridGap) {
+              const a = 0.05 + 0.06 * Math.sin(phase + (x + y) * 0.01);
+              if (a <= 0) continue;
+              ctx.fillStyle = accent(a);
+              ctx.fillRect(x - 0.8, y - 0.8, 1.6, 1.6);
+            }
+          }
+          for (const p of packets) {
+            if (p.horizontal) p.x += p.dir * p.speed * dt;
+            else p.y += p.dir * p.speed * dt;
+            if (p.x < -40 || p.x > w + 40 || p.y < -40 || p.y > h + 40) {
+              Object.assign(p, spawnPacket());
+            }
+            const tailX = p.horizontal ? p.x - p.dir * 26 : p.x;
+            const tailY = p.horizontal ? p.y : p.y - p.dir * 26;
+            const g = ctx.createLinearGradient(tailX, tailY, p.x, p.y);
+            g.addColorStop(0, accent(0));
+            g.addColorStop(1, accent(0.5));
+            ctx.strokeStyle = g;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(tailX, tailY);
+            ctx.lineTo(p.x, p.y);
+            ctx.stroke();
+            ctx.fillStyle = accent(0.6);
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        function drawStreams(dt) {
+          ctx.clearRect(0, 0, w, h);
+          const lineH = 14;
+          for (const c of cols) {
+            if (!c.active) continue;
+            c.y += c.speed * dt;
+            if (c.y - c.len * lineH > h) {
+              c.y = -Math.random() * h * 0.3;
+              c.speed = 18 + Math.random() * 34;
+              c.len = 6 + Math.floor(Math.random() * 10);
+              c.active = Math.random() < 0.85;
+            }
+            for (let i = 0; i < c.len; i++) {
+              const yy = c.y - i * lineH;
+              if (yy < 0 || yy > h) continue;
+              const a = (1 - i / c.len) * 0.24;
+              ctx.fillStyle = accent(i === 0 ? 0.55 : a);
+              ctx.fillRect(c.x, yy, 2, 8);
+            }
+          }
+        }
+
+        function frame(dt) {
+          if (variant === 'grid') drawGrid(dt);
+          else if (variant === 'streams') drawStreams(dt);
+          else drawNetwork(dt);
+        }
+
+        function loop(t) {
+          raf = requestAnimationFrame(loop);
+          if (document.hidden) { last = t; return; }
+          if (t - last < interval) return;
+          const dt = Math.min((t - last) / 1000, 0.05);
+          last = t;
+          frame(dt);
+        }
+
+        function startLoop() {
+          cancelAnimationFrame(raf);
+          if (reduce.matches) {
+            // Static, single representative frame — no motion.
+            frame(0.016);
+            return;
+          }
+          last = performance.now();
+          raf = requestAnimationFrame(loop);
+        }
+
+        let resizeTimer = 0;
+        function onResize() {
+          clearTimeout(resizeTimer);
+          resizeTimer = window.setTimeout(() => { size(); init(); startLoop(); }, 150);
+        }
+
+        size();
+        init();
+        startLoop();
+        window.addEventListener('resize', onResize);
+        // React if the user toggles their reduced-motion preference.
+        reduce.addEventListener('change', startLoop);
+      })();
+    </script>
+  )
+}

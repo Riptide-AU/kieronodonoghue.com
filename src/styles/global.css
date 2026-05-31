@@ -37,7 +37,9 @@ html {
 }
 
 body {
-  background-color: var(--color-base);
+  /* Transparent so the fixed background canvas (behind content) shows through;
+     the solid base colour is painted by <html>. */
+  background-color: transparent;
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;

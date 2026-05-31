@@ -15,6 +15,19 @@ export const SITE = {
   lang: 'en',
 } as const;
 
+/**
+ * Animated background ("living knowledge network").
+ * Settings flag so the effect can be turned on/off and the variant chosen.
+ * Variants: 'grid' (animated data grid), 'network' (drifting node graph),
+ * 'streams' (abstract matrix-inspired information streams).
+ * The effect always yields to prefers-reduced-motion. For quick comparison
+ * you can also override the variant per-page with ?bg=grid|network|streams.
+ */
+export const BACKGROUND = {
+  enabled: true,
+  variant: 'network' as 'grid' | 'network' | 'streams',
+} as const;
+
 /** Primary navigation. Order matters. */
 export const NAV = [
   { label: 'Home', href: '/' },
