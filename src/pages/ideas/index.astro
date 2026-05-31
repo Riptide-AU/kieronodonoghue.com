@@ -1,0 +1,43 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Card from '../../components/Card.astro';
+
+const ideas = (await getCollection('ideas', (p) => !p.data.draft)).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+---
+
+<BaseLayout
+  title="Ideas"
+  description="Concepts, experiments, and unfinished thinking from Kieron O'Donoghue — a digital garden of ideas in progress."
+>
+  <section class="mx-auto max-w-5xl px-5 py-16">
+    <h1 class="text-3xl font-bold tracking-tight text-ink md:text-4xl">Ideas</h1>
+    <p class="mt-4 max-w-2xl text-lg text-muted">
+      Concepts, experiments, and unfinished thinking. These are deliberately
+      rough — things I'm still figuring out, kept here while they grow.
+    </p>
+
+    {
+      ideas.length > 0 ? (
+        <div class="mt-10 grid gap-4 sm:grid-cols-2">
+          {ideas.map((idea) => (
+            <Card
+              title={idea.data.title}
+              href={`/ideas/${idea.id}/`}
+              description={idea.data.description}
+              eyebrow={idea.data.stage}
+              date={idea.data.pubDate}
+              tags={idea.data.tags}
+              image={idea.data.heroImage}
+              imageAlt={idea.data.heroImageAlt}
+            />
+          ))}
+        </div>
+      ) : (
+        <p class="mt-10 text-muted">Ideas coming soon.</p>
+      )
+    }
+  </section>
+</BaseLayout>

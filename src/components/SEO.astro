@@ -1,0 +1,111 @@
+---
+import { SITE, SOCIAL_LINKS, CONTACT_EMAIL } from '../consts';
+
+interface Props {
+  /** Page-specific title. Combined with the site name unless `titleOverride`. */
+  title?: string;
+  /** Use this exact string as the <title> (e.g. the homepage). */
+  titleOverride?: string;
+  description?: string;
+  /** OpenGraph type. */
+  type?: 'website' | 'article';
+  /** Path to a social share image under /public, or absolute URL. */
+  image?: string;
+  /** Article metadata (only used when type === 'article'). */
+  publishedDate?: Date;
+  modifiedDate?: Date;
+  /** Prevent indexing for utility pages. */
+  noindex?: boolean;
+}
+
+const {
+  title,
+  titleOverride,
+  description = SITE.description,
+  type = 'website',
+  image,
+  publishedDate,
+  modifiedDate,
+  noindex = false,
+} = Astro.props;
+
+const pageTitle =
+  titleOverride ?? (title ? `${title} · ${SITE.name}` : SITE.name);
+
+// Canonical URL derived from the current path against the configured site.
+const canonical = new URL(Astro.url.pathname, SITE.url).href;
+const ogImage = image ? new URL(image, SITE.url).href : undefined;
+
+// Person structured data (sameAs links profiles for brand/entity association).
+const sameAs = SOCIAL_LINKS.filter((l) => l.href.startsWith('http')).map(
+  (l) => l.href,
+);
+
+const personSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: SITE.name,
+  url: SITE.url,
+  jobTitle: SITE.jobTitle,
+  email: `mailto:${CONTACT_EMAIL}`,
+  sameAs,
+};
+
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE.name,
+  url: SITE.url,
+  description: SITE.description,
+  inLanguage: SITE.lang,
+};
+
+const articleSchema =
+  type === 'article'
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: title ?? SITE.name,
+        description,
+        url: canonical,
+        author: { '@type': 'Person', name: SITE.name, url: SITE.url },
+        ...(publishedDate && { datePublished: publishedDate.toISOString() }),
+        ...(modifiedDate && { dateModified: modifiedDate.toISOString() }),
+        ...(ogImage && { image: ogImage }),
+      }
+    : null;
+---
+
+<!-- Primary meta -->
+<title>{pageTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+<!-- Open Graph -->
+<meta property="og:type" content={type} />
+<meta property="og:title" content={pageTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:site_name" content={SITE.name} />
+<meta property="og:locale" content={SITE.locale} />
+{ogImage && <meta property="og:image" content={ogImage} />}
+
+<!-- Twitter -->
+<meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+<meta name="twitter:title" content={pageTitle} />
+<meta name="twitter:description" content={description} />
+{ogImage && <meta name="twitter:image" content={ogImage} />}
+
+<!-- Structured data -->
+<script is:inline type="application/ld+json" set:html={JSON.stringify(personSchema)} />
+<script is:inline type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
+{
+  articleSchema && (
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={JSON.stringify(articleSchema)}
+    />
+  )
+}

@@ -1,17 +1,231 @@
 ---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Card from '../components/Card.astro';
+import { SITE, CONTACT_EMAIL, SOCIAL } from '../consts';
 
+// Pull content for the homepage shelves. Drafts are excluded everywhere.
+const projects = (await getCollection('projects', (p) => !p.data.draft))
+  .filter((p) => p.data.featured)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 2);
+
+const writing = (await getCollection('writing', (p) => !p.data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
+
+const ideas = (await getCollection('ideas', (p) => !p.data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 2);
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<BaseLayout
+  titleOverride={`${SITE.name} — Business, technology, analytics & accounting`}
+  description={SITE.description}
+>
+  <!-- HERO -->
+  <section class="mx-auto max-w-5xl px-5 pt-16 pb-12 md:pt-24">
+    <h1 class="text-4xl font-bold tracking-tight text-ink md:text-5xl">
+      {SITE.name}
+    </h1>
+    <p class="mt-6 max-w-2xl text-lg leading-relaxed text-muted">
+      I work at the intersection of business, technology, analytics, and
+      accounting. This site is where I share my work, projects, writing, and
+      ideas — and the things I'm currently learning.
+    </p>
+    <div class="mt-8 flex flex-wrap items-center gap-3">
+      <a
+        href="/writing/"
+        class="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[#06231f] transition-colors hover:bg-accent-strong"
+      >
+        Read my writing
+      </a>
+      <a
+        href="/projects/"
+        class="rounded-md border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:border-accent/60 hover:text-accent"
+      >
+        See my projects
+      </a>
+      <span class="mx-1 text-border" aria-hidden="true">·</span>
+      <a
+        href={SOCIAL.linkedin}
+        target="_blank"
+        rel="me noopener noreferrer"
+        class="text-sm text-muted transition-colors hover:text-ink"
+      >
+        LinkedIn
+      </a>
+      <a
+        href={SOCIAL.facebook}
+        target="_blank"
+        rel="me noopener noreferrer"
+        class="text-sm text-muted transition-colors hover:text-ink"
+      >
+        Facebook
+      </a>
+      <a
+        href={`mailto:${CONTACT_EMAIL}`}
+        class="text-sm text-muted transition-colors hover:text-ink"
+      >
+        Email
+      </a>
+    </div>
+  </section>
+
+  <!-- ABOUT THIS SITE -->
+  <section class="mx-auto max-w-5xl px-5 py-10">
+    <div class="rounded-2xl border border-border bg-surface/60 p-6 md:p-8">
+      <h2 class="text-xs font-semibold uppercase tracking-wider text-accent">
+        About this site
+      </h2>
+      <p class="mt-3 max-w-3xl text-base leading-relaxed text-ink/90">
+        This is the digital home of Kieron O'Donoghue — part project archive,
+        part writing hub, and part knowledge garden. It's a single place to keep
+        the things I've built, the things I'm writing, and the ideas I'm still
+        figuring out. Nothing here needs to be finished to be worth keeping.
+      </p>
+    </div>
+  </section>
+
+  <!-- NOW / CURRENT STATUS -->
+  <section class="mx-auto max-w-5xl px-5 py-10">
+    <div class="flex items-baseline justify-between gap-4">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-muted">
+        Now
+      </h2>
+      <span class="text-xs text-muted">As of May 2026</span>
+    </div>
+    <p class="mt-4 max-w-3xl text-lg leading-relaxed text-ink/90">
+      I'm a Corporate Services Analyst working in the construction industry in
+      Australia, and a Bachelor of Commerce (Accounting) student. Day to day I
+      work with business systems, reporting, and process improvement, and I'm
+      developing my Python, SQL, JavaScript, and CSS through practical work and
+      personal projects.
+    </p>
+  </section>
+
+  <!-- FEATURED PROJECTS -->
+  {
+    projects.length > 0 && (
+      <section class="mx-auto max-w-5xl px-5 py-10">
+        <div class="flex items-baseline justify-between gap-4">
+          <h2 class="text-2xl font-semibold tracking-tight text-ink">
+            Featured projects
+          </h2>
+          <a
+            href="/projects/"
+            class="text-sm text-accent hover:text-accent-strong"
+          >
+            All projects →
+          </a>
+        </div>
+        <div class="mt-6 grid gap-4 sm:grid-cols-2">
+          {projects.map((p) => (
+            <Card
+              title={p.data.title}
+              href={`/projects/${p.id}/`}
+              description={p.data.description}
+              eyebrow={p.data.status}
+              tags={p.data.tools}
+              image={p.data.heroImage}
+              imageAlt={p.data.heroImageAlt}
+            />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  <!-- RECENT WRITING -->
+  {
+    writing.length > 0 && (
+      <section class="mx-auto max-w-5xl px-5 py-10">
+        <div class="flex items-baseline justify-between gap-4">
+          <h2 class="text-2xl font-semibold tracking-tight text-ink">
+            Recent writing
+          </h2>
+          <a href="/writing/" class="text-sm text-accent hover:text-accent-strong">
+            All writing →
+          </a>
+        </div>
+        <div class="mt-6 grid gap-4 sm:grid-cols-3">
+          {writing.map((w) => (
+            <Card
+              title={w.data.title}
+              href={`/writing/${w.id}/`}
+              description={w.data.description}
+              eyebrow={w.data.category}
+              date={w.data.pubDate}
+              image={w.data.heroImage}
+              imageAlt={w.data.heroImageAlt}
+            />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  <!-- IDEAS -->
+  {
+    ideas.length > 0 && (
+      <section class="mx-auto max-w-5xl px-5 py-10">
+        <div class="flex items-baseline justify-between gap-4">
+          <h2 class="text-2xl font-semibold tracking-tight text-ink">Ideas</h2>
+          <a href="/ideas/" class="text-sm text-accent hover:text-accent-strong">
+            All ideas →
+          </a>
+        </div>
+        <div class="mt-6 grid gap-4 sm:grid-cols-2">
+          {ideas.map((idea) => (
+            <Card
+              title={idea.data.title}
+              href={`/ideas/${idea.id}/`}
+              description={idea.data.description}
+              eyebrow={idea.data.stage}
+              image={idea.data.heroImage}
+              imageAlt={idea.data.heroImageAlt}
+            />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  <!-- LINKS / CONNECT -->
+  <section class="mx-auto max-w-5xl px-5 py-10">
+    <h2 class="text-2xl font-semibold tracking-tight text-ink">Connect</h2>
+    <p class="mt-3 max-w-2xl text-muted">
+      The best ways to find me online and get in touch.
+    </p>
+    <div class="mt-5 flex flex-wrap gap-3">
+      <a
+        href={SOCIAL.linkedin}
+        target="_blank"
+        rel="me noopener noreferrer"
+        class="rounded-md border border-border px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-accent/60 hover:text-accent"
+      >
+        LinkedIn
+      </a>
+      <a
+        href={SOCIAL.facebook}
+        target="_blank"
+        rel="me noopener noreferrer"
+        class="rounded-md border border-border px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-accent/60 hover:text-accent"
+      >
+        Facebook
+      </a>
+      <a
+        href={`mailto:${CONTACT_EMAIL}`}
+        class="rounded-md border border-border px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-accent/60 hover:text-accent"
+      >
+        Email
+      </a>
+      <a
+        href="/links/"
+        class="rounded-md border border-border px-4 py-2 text-sm font-medium text-muted transition-colors hover:text-ink"
+      >
+        All links →
+      </a>
+    </div>
+  </section>
+</BaseLayout>

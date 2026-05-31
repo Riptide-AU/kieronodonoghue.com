@@ -1,0 +1,62 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SOCIAL_LINKS, CONTACT_EMAIL } from '../consts';
+
+// Short descriptions per link so the page reads as more than a list of URLs.
+const descriptions: Record<string, string> = {
+  LinkedIn: 'Professional profile and work history.',
+  Facebook: 'Personal profile.',
+  Email: 'The best way to get in touch directly.',
+};
+---
+
+<BaseLayout
+  title="Links"
+  description="Find Kieron O'Donoghue online — LinkedIn and email."
+>
+  <section class="mx-auto max-w-prose px-5 py-16">
+    <h1 class="text-3xl font-bold tracking-tight text-ink md:text-4xl">Links</h1>
+    <p class="mt-4 text-lg text-muted">
+      The main ways to find me online and get in touch.
+    </p>
+
+    <ul class="mt-10 flex flex-col gap-3">
+      {
+        SOCIAL_LINKS.map((link) => (
+          <li>
+            <a
+              href={link.href}
+              class="group flex items-center justify-between rounded-xl border border-border bg-surface p-5 transition-colors hover:border-accent/60 hover:bg-surface-2"
+              {...link.href.startsWith('http')
+                ? { target: '_blank', rel: 'me noopener noreferrer' }
+                : {}}
+            >
+              <span>
+                <span class="block font-semibold text-ink">{link.label}</span>
+                <span class="mt-1 block text-sm text-muted">
+                  {descriptions[link.label] ?? ''}
+                </span>
+              </span>
+              <span
+                class="text-muted transition-colors group-hover:text-accent"
+                aria-hidden="true"
+              >
+                →
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <p class="mt-8 text-sm text-muted">
+      You can also email me directly at
+      <a
+        href={`mailto:${CONTACT_EMAIL}`}
+        class="text-accent hover:text-accent-strong"
+      >
+        {CONTACT_EMAIL}</a
+      >.
+    </p>
+  </section>
+</BaseLayout>

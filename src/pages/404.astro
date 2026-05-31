@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Page not found" noindex={true}>
+  <section class="mx-auto max-w-prose px-5 py-24 text-center">
+    <p class="text-sm font-semibold uppercase tracking-wider text-accent">404</p>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight text-ink md:text-4xl">
+      Page not found
+    </h1>
+    <p class="mt-4 text-muted">
+      The page you're looking for doesn't exist or may have moved.
+    </p>
+    <div class="mt-8 flex justify-center gap-3">
+      <a
+        href="/"
+        class="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[#06231f] transition-colors hover:bg-accent-strong"
+      >
+        Go home
+      </a>
+      <a
+        href="/writing/"
+        class="rounded-md border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:border-accent/60 hover:text-accent"
+      >
+        Read my writing
+      </a>
+    </div>
+  </section>
+</BaseLayout>

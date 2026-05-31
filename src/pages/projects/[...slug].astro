@@ -1,0 +1,184 @@
+---
+import { getCollection, render } from 'astro:content';
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import FeatureImage from '../../components/FeatureImage.astro';
+import Card from '../../components/Card.astro';
+
+export const getStaticPaths = (async () => {
+  const projects = await getCollection('projects', (p) => !p.data.draft);
+  return projects.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}) satisfies GetStaticPaths;
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const dateLabel = new Intl.DateTimeFormat('en-AU', {
+  year: 'numeric',
+  month: 'long',
+}).format(entry.data.date);
+
+// Related content by shared tags — the start of the "interactive relationships"
+// between projects, writing, and ideas noted in the brief.
+const tagSet = new Set(entry.data.tags);
+const sharesTag = (tags: string[]) => tags.some((t) => tagSet.has(t));
+
+const relatedProjects = (await getCollection('projects', (p) => !p.data.draft))
+  .filter((p) => p.id !== entry.id && sharesTag(p.data.tags))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 2);
+
+const relatedIdeas = (await getCollection('ideas', (i) => !i.data.draft))
+  .filter((i) => sharesTag(i.data.tags))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 2);
+---
+
+<BaseLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  type="article"
+  publishedDate={entry.data.date}
+  image={entry.data.heroImage?.src}
+>
+  <!-- HERO -->
+  <section class="mx-auto max-w-5xl px-5 pt-12 pb-8 md:pt-16">
+    <a
+      href="/projects/"
+      class="text-sm text-muted transition-colors hover:text-accent"
+    >
+      ← Projects
+    </a>
+    <p class="mt-6 text-xs font-semibold uppercase tracking-wider text-accent">
+      Project · {entry.data.status}
+    </p>
+    <h1 class="mt-2 text-3xl font-bold tracking-tight text-ink md:text-4xl">
+      {entry.data.title}
+    </h1>
+    <p class="mt-4 max-w-2xl text-lg leading-relaxed text-muted">
+      {entry.data.description}
+    </p>
+
+    {
+      entry.data.heroImage && (
+        <div class="mt-8">
+          <FeatureImage
+            src={entry.data.heroImage}
+            alt={entry.data.heroImageAlt ?? entry.data.title}
+            class="aspect-[21/9]"
+            loading="eager"
+            sizes="(min-width: 1024px) 64rem, 100vw"
+          />
+        </div>
+      )
+    }
+  </section>
+
+  <!-- BODY + METADATA -->
+  <div
+    class="mx-auto grid max-w-5xl gap-10 px-5 py-6 lg:grid-cols-[1fr_16rem] lg:items-start"
+  >
+    <!-- Metadata panel (first on mobile, sidebar on desktop) -->
+    <aside
+      class="order-first rounded-2xl border border-border bg-surface p-6 lg:order-last lg:sticky lg:top-24"
+    >
+      <h2 class="text-xs font-semibold uppercase tracking-wider text-muted">
+        Project details
+      </h2>
+      <dl class="mt-4 space-y-4 text-sm">
+        <div>
+          <dt class="text-muted">Status</dt>
+          <dd class="mt-0.5 font-medium text-ink">{entry.data.status}</dd>
+        </div>
+        <div>
+          <dt class="text-muted">Date</dt>
+          <dd class="mt-0.5 font-medium text-ink">{dateLabel}</dd>
+        </div>
+        {
+          entry.data.tools.length > 0 && (
+            <div>
+              <dt class="text-muted">Tools</dt>
+              <dd class="mt-1.5 flex flex-wrap gap-1.5">
+                {entry.data.tools.map((tool) => (
+                  <span class="rounded-full border border-border px-2 py-0.5 text-xs text-ink/90">
+                    {tool}
+                  </span>
+                ))}
+              </dd>
+            </div>
+          )
+        }
+        {
+          entry.data.tags.length > 0 && (
+            <div>
+              <dt class="text-muted">Tags</dt>
+              <dd class="mt-1.5 flex flex-wrap gap-1.5">
+                {entry.data.tags.map((tag) => (
+                  <span class="rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted">
+                    {tag}
+                  </span>
+                ))}
+              </dd>
+            </div>
+          )
+        }
+      </dl>
+    </aside>
+
+    <!-- Case-study body (Context, Problem, Approach, Outcome, What I learned) -->
+    <article class="prose min-w-0 max-w-none">
+      <Content />
+    </article>
+  </div>
+
+  <!-- RELATED -->
+  {
+    (relatedProjects.length > 0 || relatedIdeas.length > 0) && (
+      <section class="mx-auto max-w-5xl px-5 py-12">
+        <hr class="mb-12 border-border" />
+        {relatedProjects.length > 0 && (
+          <div>
+            <h2 class="text-xl font-semibold tracking-tight text-ink">
+              Related projects
+            </h2>
+            <div class="mt-5 grid gap-4 sm:grid-cols-2">
+              {relatedProjects.map((p) => (
+                <Card
+                  title={p.data.title}
+                  href={`/projects/${p.id}/`}
+                  description={p.data.description}
+                  eyebrow={p.data.status}
+                  tags={p.data.tools}
+                  image={p.data.heroImage}
+                  imageAlt={p.data.heroImageAlt}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+        {relatedIdeas.length > 0 && (
+          <div class="mt-10">
+            <h2 class="text-xl font-semibold tracking-tight text-ink">
+              Related ideas
+            </h2>
+            <div class="mt-5 grid gap-4 sm:grid-cols-2">
+              {relatedIdeas.map((idea) => (
+                <Card
+                  title={idea.data.title}
+                  href={`/ideas/${idea.id}/`}
+                  description={idea.data.description}
+                  eyebrow={idea.data.stage}
+                  image={idea.data.heroImage}
+                  imageAlt={idea.data.heroImageAlt}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+    )
+  }
+</BaseLayout>

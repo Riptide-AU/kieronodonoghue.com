@@ -1,0 +1,87 @@
+---
+import { Image } from 'astro:assets';
+
+interface Props {
+  title: string;
+  href: string;
+  description?: string;
+  /** Small label shown above the title, e.g. a category or status. */
+  eyebrow?: string;
+  /** Optional date rendered in the footer of the card. */
+  date?: Date;
+  /** Short tag chips. */
+  tags?: string[];
+  /** Optional thumbnail (ImageMetadata from a collection). */
+  image?: ImageMetadata;
+  /** Alt text — required when `image` is provided. */
+  imageAlt?: string;
+}
+
+const { title, href, description, eyebrow, date, tags = [], image, imageAlt } =
+  Astro.props;
+
+const dateLabel = date
+  ? new Intl.DateTimeFormat('en-AU', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    }).format(date)
+  : undefined;
+const dateTime = date ? date.toISOString().slice(0, 10) : undefined;
+---
+
+<article
+  class="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-surface transition-colors hover:border-accent/60 hover:bg-surface-2"
+>
+  {
+    image && (
+      <div class="aspect-[16/9] overflow-hidden border-b border-border">
+        <Image
+          src={image}
+          alt={imageAlt ?? ''}
+          widths={[320, 640, 960]}
+          sizes="(min-width: 640px) 24rem, 100vw"
+          loading="lazy"
+          decoding="async"
+          class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+        />
+      </div>
+    )
+  }
+
+  <div class="flex flex-1 flex-col p-5">
+    {
+      eyebrow && (
+        <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-accent">
+          {eyebrow}
+        </p>
+      )
+    }
+
+    <h3 class="text-lg font-semibold leading-snug text-ink">
+      <a href={href} class="after:absolute after:inset-0">
+        {title}
+      </a>
+    </h3>
+
+    {
+      description && (
+        <p class="mt-2 text-sm leading-relaxed text-muted">{description}</p>
+      )
+    }
+
+    {
+      (tags.length > 0 || dateLabel) && (
+        <div class="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted">
+          {dateLabel && <time datetime={dateTime}>{dateLabel}</time>}
+          {tags.length > 0 && dateLabel && <span aria-hidden="true">·</span>}
+          {tags.slice(0, 3).map((tag) => (
+            <span class="rounded-full border border-border px-2 py-0.5">
+              {tag}
+            </span>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</article>

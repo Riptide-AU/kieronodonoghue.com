@@ -1,0 +1,44 @@
+---
+import { Image } from 'astro:assets';
+
+interface Props {
+  /** Imported image from a content collection (ImageMetadata). */
+  src: ImageMetadata;
+  /** Required, meaningful alt text. */
+  alt: string;
+  /** Wrapper classes — usually an aspect ratio, e.g. "aspect-[21/9]". */
+  class?: string;
+  /** `sizes` attribute for responsive selection. */
+  sizes?: string;
+  /** Use "eager" for above-the-fold heroes to avoid a late paint. */
+  loading?: 'lazy' | 'eager';
+}
+
+const {
+  src,
+  alt,
+  class: className = 'aspect-[16/9]',
+  sizes = '(min-width: 1024px) 64rem, 100vw',
+  loading = 'lazy',
+} = Astro.props;
+
+// Reserving the aspect ratio on the wrapper prevents layout shift while the
+// optimised image loads. The <Image> itself fills and covers that box.
+---
+
+<div
+  class:list={[
+    'overflow-hidden rounded-xl border border-border bg-surface',
+    className,
+  ]}
+>
+  <Image
+    src={src}
+    alt={alt}
+    widths={[480, 768, 1024, 1536]}
+    sizes={sizes}
+    loading={loading}
+    decoding="async"
+    class="h-full w-full object-cover"
+  />
+</div>

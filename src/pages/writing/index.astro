@@ -1,0 +1,45 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Card from '../../components/Card.astro';
+
+const posts = (await getCollection('writing', (p) => !p.data.draft)).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+---
+
+<BaseLayout
+  title="Writing"
+  description="Articles, notes, and reflections by Kieron O'Donoghue on business, analytics, accounting, technology, AI, and what he's learning."
+>
+  <section class="mx-auto max-w-5xl px-5 py-16">
+    <h1 class="text-3xl font-bold tracking-tight text-ink md:text-4xl">
+      Writing
+    </h1>
+    <p class="mt-4 max-w-2xl text-lg text-muted">
+      Articles, notes, and reflections. Some are finished thoughts; some are
+      shorter learning notes written while I'm still in the middle of things.
+    </p>
+
+    {
+      posts.length > 0 ? (
+        <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {posts.map((post) => (
+            <Card
+              title={post.data.title}
+              href={`/writing/${post.id}/`}
+              description={post.data.description}
+              eyebrow={post.data.category}
+              date={post.data.pubDate}
+              tags={post.data.tags}
+              image={post.data.heroImage}
+              imageAlt={post.data.heroImageAlt}
+            />
+          ))}
+        </div>
+      ) : (
+        <p class="mt-10 text-muted">Writing coming soon.</p>
+      )
+    }
+  </section>
+</BaseLayout>

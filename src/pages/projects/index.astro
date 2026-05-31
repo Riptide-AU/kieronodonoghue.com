@@ -1,0 +1,45 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Card from '../../components/Card.astro';
+
+const projects = (await getCollection('projects', (p) => !p.data.draft)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+---
+
+<BaseLayout
+  title="Projects"
+  description="Projects and case studies by Kieron O'Donoghue — things I've built or worked on, with what I learned along the way."
+>
+  <section class="mx-auto max-w-5xl px-5 py-16">
+    <h1 class="text-3xl font-bold tracking-tight text-ink md:text-4xl">
+      Projects
+    </h1>
+    <p class="mt-4 max-w-2xl text-lg text-muted">
+      Things I've built or worked on. Each one covers the context, the approach,
+      the tools, where it stands, and what I learned.
+    </p>
+
+    {
+      projects.length > 0 ? (
+        <div class="mt-10 grid gap-4 sm:grid-cols-2">
+          {projects.map((p) => (
+            <Card
+              title={p.data.title}
+              href={`/projects/${p.id}/`}
+              description={p.data.description}
+              eyebrow={p.data.status}
+              date={p.data.date}
+              tags={p.data.tools}
+              image={p.data.heroImage}
+              imageAlt={p.data.heroImageAlt}
+            />
+          ))}
+        </div>
+      ) : (
+        <p class="mt-10 text-muted">More projects coming soon.</p>
+      )
+    }
+  </section>
+</BaseLayout>

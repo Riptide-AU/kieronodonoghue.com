@@ -379,3 +379,31 @@ Examples:
 - `Improve SEO metadata`
 
 Before making large changes, explain the planned approach.
+
+## Future Enhancements
+
+This website should eventually include tasteful, high-quality animations and transitions.
+
+Animation should:
+- support the content
+- reinforce the digital garden / knowledge hub concept
+- demonstrate technical capability
+- feel intentional and professional
+
+Avoid:
+- generic startup animations
+- floating blobs
+- excessive particle effects
+- distracting motion
+- animations that reduce readability
+
+Prefer:
+- smooth page transitions
+- subtle scroll reveals
+- animated data-grid concepts
+- knowledge-network visualisations
+- interactive project and idea relationships
+
+Performance and accessibility must remain priorities.
+
+All animations should respect prefers-reduced-motion.

@@ -1,0 +1,74 @@
+---
+import { getCollection, render } from 'astro:content';
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import FeatureImage from '../../components/FeatureImage.astro';
+
+export const getStaticPaths = (async () => {
+  const ideas = await getCollection('ideas', (p) => !p.data.draft);
+  return ideas.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}) satisfies GetStaticPaths;
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const fmt = (d: Date) =>
+  new Intl.DateTimeFormat('en-AU', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(d);
+---
+
+<BaseLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  type="article"
+  publishedDate={entry.data.pubDate}
+  modifiedDate={entry.data.updatedDate}
+  image={entry.data.heroImage?.src}
+>
+  <article class="mx-auto max-w-prose px-5 py-16">
+    <a
+      href="/ideas/"
+      class="text-sm text-muted transition-colors hover:text-accent"
+    >
+      ← Ideas
+    </a>
+
+    <div class="mt-6 flex flex-wrap items-center gap-2 text-xs text-muted">
+      <span class="rounded-full border border-accent/40 px-2 py-0.5 text-accent">
+        {entry.data.stage}
+      </span>
+      <time datetime={entry.data.pubDate.toISOString().slice(0, 10)}>
+        {fmt(entry.data.pubDate)}
+      </time>
+    </div>
+
+    <h1 class="mt-3 text-3xl font-bold tracking-tight text-ink md:text-4xl">
+      {entry.data.title}
+    </h1>
+
+    {
+      entry.data.heroImage && (
+        <div class="mt-8">
+          <FeatureImage
+            src={entry.data.heroImage}
+            alt={entry.data.heroImageAlt ?? entry.data.title}
+            loading="eager"
+            sizes="(min-width: 768px) 44rem, 100vw"
+          />
+        </div>
+      )
+    }
+
+    <hr class="my-8 border-border" />
+
+    <div class="prose">
+      <Content />
+    </div>
+  </article>
+</BaseLayout>
