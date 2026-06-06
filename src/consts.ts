@@ -55,6 +55,7 @@ export const SOCIAL = {
   github: 'https://github.com/Riptide-AU',
   amazon:
     "https://www.amazon.com.au/s?i=books-single-index&rh=p_27%3AKieron%2BO%2527Donoghue&s=relevancerank&text=Kieron+O%27Donoghue",
+  goodreads: 'https://www.goodreads.com/kieron_odonoghue',
 } as const;
 
 /** Links rendered in the footer and Links page, in display order.
@@ -64,5 +65,6 @@ export const SOCIAL_LINKS = [
   { label: 'Facebook', href: SOCIAL.facebook },
   { label: 'GitHub', href: SOCIAL.github },
   { label: 'Amazon', href: SOCIAL.amazon },
+  { label: 'Goodreads', href: SOCIAL.goodreads },
   { label: 'Email', href: `mailto:${CONTACT_EMAIL}` },
 ] as const;
