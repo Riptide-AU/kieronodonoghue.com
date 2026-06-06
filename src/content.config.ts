@@ -125,6 +125,9 @@ const books = defineCollection({
       /** Optional full wrap cover (front + spine + back); currently unused. */
       fullCoverImage: image().optional(),
       fullCoverImageAlt: z.string().min(1).optional(),
+      /** Optional wide promotional banner, shown below the excerpt. */
+      bannerImage: image().optional(),
+      bannerImageAlt: z.string().min(1).optional(),
       publishedDate: z.coerce.date().optional(),
       featured: z.boolean().default(false),
       draft: z.boolean().default(false),

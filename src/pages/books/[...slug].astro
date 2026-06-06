@@ -1,5 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import BookCover from '../../components/BookCover.astro';
@@ -181,6 +182,27 @@ const bookSchema = {
       }
     </div>
   </section>
+
+  <!-- PROMOTIONAL BANNER (below the excerpt) — cinematic feature panel that
+       spans the site's full content width (max-w-5xl), wider than the
+       reading-column sections above and below it. -->
+  {
+    data.bannerImage && (
+      <section class="mx-auto max-w-5xl px-5 py-14">
+        <div class="overflow-hidden rounded-2xl border border-border bg-surface shadow-xl shadow-black/40 ring-1 ring-accent/10">
+          <Image
+            src={data.bannerImage}
+            alt={data.bannerImageAlt ?? `${data.title} — promotional banner`}
+            widths={[640, 960, 1280, 1600, 1920]}
+            sizes="(min-width: 1024px) 61rem, 100vw"
+            loading="lazy"
+            decoding="async"
+            class="block h-auto w-full"
+          />
+        </div>
+      </section>
+    )
+  }
 
   <!-- MORE FROM KIERON -->
   <section class="mx-auto max-w-3xl px-5 py-10">

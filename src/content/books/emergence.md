@@ -12,6 +12,8 @@ insideCoverImage: "../../assets/images/books/emergence/Inside_Cover.png"
 insideCoverImageAlt: "Inside title page of Emergence — Book One of the Soul War Saga by Kieron O’Donoghue."
 fullCoverImage: "../../assets/images/books/emergence/Full_Cover_2.4.png"
 fullCoverImageAlt: "Full wraparound cover of Emergence by Kieron O’Donoghue, showing the back, spine, and front."
+bannerImage: "../../assets/images/books/emergence/Emergence_Promo_Banner.png"
+bannerImageAlt: "Promotional banner for Emergence by Kieron O’Donoghue — “Some heritage will change you. Some will consume you.” Book One of the Soul War Saga. Available now."
 featured: true
 blurb: |
   Sixteen-year-old Envy Black has spent her entire life moving from country to country with her military father and home-schooling mother. Never staying anywhere long enough to belong, she has learned to keep to herself.
