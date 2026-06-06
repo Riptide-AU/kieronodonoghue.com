@@ -88,4 +88,47 @@ const ideas = defineCollection({
       .refine(hasAltWhenImage, altRefineOptions),
 });
 
-export const collections = { writing, projects, ideas };
+/**
+ * Published fiction by Kieron O'Donoghue. The slug comes from the filename
+ * (entry.id), matching the other collections. The Markdown body is reserved
+ * for a future excerpt — the marketing blurb lives in frontmatter so the
+ * book pages and Book structured data stay in sync without rendering content.
+ */
+const books = defineCollection({
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/books' }),
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      /** Series name, e.g. "Soul War Saga". */
+      series: z.string().optional(),
+      /** Position within the series (1 = book one). */
+      bookNumber: z.number().int().positive().optional(),
+      author: z.string().default('Kieron O’Donoghue'),
+      /** Genre tags, e.g. ["Fantasy", "Epic Fantasy"]. */
+      genre: z.array(z.string()).default([]),
+      /** Marketing blurb (multi-paragraph, separated by blank lines). */
+      blurb: z.string(),
+      /** Optional sample excerpt (multi-paragraph, separated by blank lines).
+       *  Stored verbatim so punctuation/dialogue is preserved exactly. */
+      excerpt: z.string().optional(),
+      /** Optional shorter meta description; falls back to the blurb. */
+      description: z.string().optional(),
+      /** Retailer purchase link (Amazon for now). */
+      buyLink: z.string().url(),
+      /** Front cover, used in the interactive book hero and cards. */
+      coverImage: image(),
+      coverImageAlt: z.string().min(1),
+      /** Optional inside cover / title page, shown on the left page when the
+       *  interactive book opens. Falls back to a printed paper page. */
+      insideCoverImage: image().optional(),
+      insideCoverImageAlt: z.string().min(1).optional(),
+      /** Optional full wrap cover (front + spine + back); currently unused. */
+      fullCoverImage: image().optional(),
+      fullCoverImageAlt: z.string().min(1).optional(),
+      publishedDate: z.coerce.date().optional(),
+      featured: z.boolean().default(false),
+      draft: z.boolean().default(false),
+    }),
+});
+
+export const collections = { writing, projects, ideas, books };

@@ -1,0 +1,215 @@
+---
+import { getCollection } from 'astro:content';
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BookCover from '../../components/BookCover.astro';
+import { SITE } from '../../consts';
+
+export const getStaticPaths = (async () => {
+  const books = await getCollection('books', (b) => !b.data.draft);
+  return books.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}) satisfies GetStaticPaths;
+
+const { entry } = Astro.props;
+const data = entry.data;
+
+const ordinal =
+  ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'][
+    data.bookNumber ?? 0
+  ] ?? `${data.bookNumber}`;
+
+const seriesLine = data.series
+  ? `${data.series}${data.bookNumber ? ` — Book ${ordinal}` : ''}`
+  : undefined;
+
+// Blurb is stored as a single multi-paragraph string in frontmatter.
+const blurbParagraphs = data.blurb.split('\n\n').map((p) => p.trim()).filter(Boolean);
+
+// Optional sample excerpt, split into paragraphs on blank lines. Rendered as
+// plain text (not Markdown) so the punctuation and dialogue stay verbatim.
+const excerptParagraphs = data.excerpt
+  ? data.excerpt.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
+  : [];
+
+const metaDescription = data.description ?? blurbParagraphs[0];
+
+// Absolute URLs for canonical + structured data.
+const canonical = new URL(`/books/${entry.id}/`, SITE.url).href;
+const coverUrl = new URL(data.coverImage.src, SITE.url).href;
+
+// schema.org Book — associates Kieron O'Donoghue, the title, the series,
+// the genre, and the Amazon purchase link for rich results / brand SEO.
+const bookSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Book',
+  name: data.title,
+  url: canonical,
+  image: coverUrl,
+  description: metaDescription,
+  inLanguage: SITE.lang,
+  bookFormat: 'https://schema.org/EBook',
+  genre: data.genre,
+  author: {
+    '@type': 'Person',
+    name: data.author,
+    url: SITE.url,
+  },
+  ...(data.series && {
+    isPartOf: {
+      '@type': 'BookSeries',
+      name: data.series,
+      ...(data.bookNumber && { position: data.bookNumber }),
+    },
+  }),
+  ...(data.publishedDate && {
+    datePublished: data.publishedDate.toISOString().slice(0, 10),
+  }),
+  offers: {
+    '@type': 'Offer',
+    url: data.buyLink,
+    availability: 'https://schema.org/InStock',
+  },
+};
+---
+
+<BaseLayout
+  title={data.title}
+  description={metaDescription}
+  type="article"
+  image={coverUrl}
+  publishedDate={data.publishedDate}
+>
+  <!-- HERO -->
+  <section class="mx-auto max-w-5xl px-5 pt-12 pb-8 md:pt-16">
+    <a href="/books/" class="text-sm text-muted transition-colors hover:text-accent">
+      ← Books
+    </a>
+
+    <div class="mt-8 text-center">
+      {
+        seriesLine && (
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+            {seriesLine}
+          </p>
+        )
+      }
+      <h1 class="mt-2 text-4xl font-bold tracking-tight text-ink md:text-5xl">
+        {data.title}
+      </h1>
+      <p class="mt-3 text-base text-muted">
+        by <span class="text-ink">{data.author}</span>
+      </p>
+
+      {
+        data.genre.length > 0 && (
+          <div class="mt-5 flex flex-wrap justify-center gap-2">
+            {data.genre.map((g) => (
+              <span class="rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-ink/90">
+                {g}
+              </span>
+            ))}
+          </div>
+        )
+      }
+
+      <div class="mt-7">
+        <a
+          href={data.buyLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-[#06231f] transition-colors hover:bg-accent-strong"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <path d="M3 6h18" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
+          </svg>
+          Buy on Amazon
+        </a>
+      </div>
+    </div>
+
+    <!-- Interactive book hero: closed it shows the cover; opening it grows to
+         fill most of the screen and reveals the full blurb across two pages. -->
+    <div class="mt-12 flex justify-center pb-4">
+      <BookCover
+        src={data.coverImage}
+        alt={data.coverImageAlt}
+        title={data.title}
+        author={data.author}
+        seriesName={data.series}
+        bookLabel={data.bookNumber ? `Book ${ordinal}` : undefined}
+        paragraphs={blurbParagraphs}
+      />
+    </div>
+  </section>
+
+  <!-- EXCERPT -->
+  <section class="mx-auto max-w-3xl px-5 py-6">
+    <div class="rounded-2xl border border-border bg-surface p-6 md:p-8">
+      <h2 class="text-xs font-semibold uppercase tracking-wider text-accent">
+        Excerpt
+      </h2>
+      {
+        excerptParagraphs.length > 0 ? (
+          <div class="prose mt-4 max-w-none">
+            {excerptParagraphs.map((p) => (
+              <p>{p}</p>
+            ))}
+          </div>
+        ) : (
+          <p class="mt-3 text-sm leading-relaxed text-muted">
+            A sample chapter from {data.title} will be published here soon. In
+            the meantime, you can read the opening on Amazon.
+          </p>
+        )
+      }
+    </div>
+  </section>
+
+  <!-- MORE FROM KIERON -->
+  <section class="mx-auto max-w-3xl px-5 py-10">
+    <hr class="mb-10 border-border" />
+    <h2 class="text-xl font-semibold tracking-tight text-ink">
+      More from Kieron
+    </h2>
+    <p class="mt-2 text-sm text-muted">
+      I also write about technology, analytics, and the things I'm building.
+    </p>
+    <div class="mt-5 flex flex-wrap gap-3">
+      <a
+        href="/writing/"
+        class="rounded-md border border-border px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-accent/60 hover:text-accent"
+      >
+        Writing →
+      </a>
+      <a
+        href="/ideas/"
+        class="rounded-md border border-border px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-accent/60 hover:text-accent"
+      >
+        Ideas →
+      </a>
+    </div>
+  </section>
+
+  <!-- Book structured data -->
+  <script
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(bookSchema)}
+  />
+</BaseLayout>

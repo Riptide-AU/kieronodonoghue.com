@@ -1,5 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Card from '../components/Card.astro';
 import { SITE, CONTACT_EMAIL, SOCIAL } from '../consts';
@@ -17,6 +18,11 @@ const writing = (await getCollection('writing', (p) => !p.data.draft))
 const ideas = (await getCollection('ideas', (p) => !p.data.draft))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
   .slice(0, 2);
+
+// Surface one book so the site makes clear Kieron is also an author.
+const featuredBook = (await getCollection('books', (b) => !b.data.draft))
+  .filter((b) => b.data.featured)
+  .sort((a, b) => (a.data.bookNumber ?? 0) - (b.data.bookNumber ?? 0))[0];
 ---
 
 <BaseLayout
@@ -186,6 +192,47 @@ const ideas = (await getCollection('ideas', (p) => !p.data.draft))
               imageAlt={idea.data.heroImageAlt}
             />
           ))}
+        </div>
+      </section>
+    )
+  }
+
+  <!-- BOOKS / AUTHOR -->
+  {
+    featuredBook && (
+      <section class="mx-auto max-w-5xl px-5 py-10">
+        <div class="overflow-hidden rounded-2xl border border-border bg-surface p-6 md:p-8">
+          <div class="grid items-center gap-6 sm:grid-cols-[6rem_1fr] sm:gap-8">
+            <a
+              href={`/books/${featuredBook.id}/`}
+              class="group block overflow-hidden rounded-md border border-border shadow-lg shadow-black/40"
+            >
+              <Image
+                src={featuredBook.data.coverImage}
+                alt={featuredBook.data.coverImageAlt}
+                widths={[120, 192, 240]}
+                sizes="6rem"
+                loading="lazy"
+                decoding="async"
+                class="aspect-[2/3] h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+              />
+            </a>
+            <div class="min-w-0">
+              <h2 class="text-xs font-semibold uppercase tracking-wider text-accent">
+                I also write fiction
+              </h2>
+              <p class="mt-3 max-w-2xl text-base leading-relaxed text-ink/90">
+                <em>{featuredBook.data.title}</em> is book one in the{' '}
+                {featuredBook.data.series}, a fantasy series by {SITE.name}.
+              </p>
+              <a
+                href={`/books/${featuredBook.id}/`}
+                class="mt-4 inline-block text-sm font-medium text-accent transition-colors hover:text-accent-strong"
+              >
+                Read about {featuredBook.data.title} →
+              </a>
+            </div>
+          </div>
         </div>
       </section>
     )

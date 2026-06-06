@@ -1,0 +1,455 @@
+---
+import { Image } from 'astro:assets';
+
+/**
+ * Interactive opening book — the hero visual for a book page.
+ *
+ * Closed: the visitor sees the real front cover as a physical object.
+ * Open (hover / keyboard focus / click-tap): the book grows to fill most of
+ * the screen and swings open on the spine into a two-page spread that holds
+ * the full blurb as printed page text. A dimmed backdrop spotlights it.
+ *
+ * The cover is the hinged leaf: its FRONT face is the cover art (seen closed)
+ * and its BACK face is the left inside page (seen open). A static right inside
+ * page sits beside the spine and is revealed as the leaf swings away. The
+ * blurb is split by length across the two pages.
+ *
+ * Accessibility / behaviour:
+ *  - One <button> (aria-expanded) drives everything: focusable, toggles with
+ *    Enter/Space, and click/tap toggles on touch devices. Hover and focus also
+ *    open it via CSS alone.
+ *  - The printed pages are decorative (aria-hidden) and their transparent
+ *    overflow is click-through. The full blurb is also emitted once as ordered,
+ *    screen-reader-only text right after the button, so it is real, correctly
+ *    ordered text rather than something trapped inside the visual.
+ *  - Motion is pure CSS; the global prefers-reduced-motion guard collapses the
+ *    transitions so the book opens instantly. No third-party libraries.
+ */
+interface Props {
+  src: ImageMetadata;
+  alt: string;
+  /** Book title — front cover label and inside title page. */
+  title: string;
+  /** Full blurb paragraphs, shown on the right inside page. */
+  paragraphs: string[];
+  /** Author, printed on the inside title page. */
+  author: string;
+  /** Series name, e.g. "Soul War Saga" (inside title page). */
+  seriesName?: string;
+  /** Book label, e.g. "Book One" (inside title page). */
+  bookLabel?: string;
+}
+
+const { src, alt, title, paragraphs, author, seriesName, bookLabel } =
+  Astro.props;
+
+// The left page is an HTML/CSS title page (same parchment as the right page);
+// the full blurb sits on the right page.
+const right = paragraphs;
+---
+
+<div class="bookwrap">
+  <div class="book">
+    <span class="book__backdrop" aria-hidden="true"></span>
+    <button
+      type="button"
+      class="book__toggle"
+      aria-expanded="false"
+      aria-label={`Open ${title} to read the blurb`}
+    >
+      <span class="book__viewport">
+        <span class="book__spread">
+          <!-- Static right inside page (revealed as the cover opens) -->
+          <span class="book__page book__page--right" aria-hidden="true">
+            <span class="book__text">
+              {right.map((p, i) => (
+                <p class:list={['book__body', i === 0 && 'book__body--lead']}>
+                  {p}
+                </p>
+              ))}
+              <span class="book__rule"></span>
+              <span class="book__buy">Buy on Amazon &rarr;</span>
+            </span>
+          </span>
+
+          <!-- Hinged leaf: front = cover art, back = left inside page -->
+          <span class="book__leaf">
+            <span class="book__face book__face--front">
+              <Image
+                src={src}
+                alt={alt}
+                widths={[280, 400, 560, 800]}
+                sizes="(min-width: 768px) 30rem, 46vw"
+                loading="eager"
+                decoding="async"
+                class="book__img"
+              />
+              <span class="book__spine" aria-hidden="true"></span>
+              <span class="book__sheen" aria-hidden="true"></span>
+            </span>
+            <span class="book__face book__face--back" aria-hidden="true">
+              <!-- Inside title page, recreated in CSS to match the parchment -->
+              <span class="book__title-page">
+                <span class="book__tp-title">{title}</span>
+                <span class="book__tp-orn">&#10086;</span>
+                {bookLabel && <span class="book__tp-book">{bookLabel}</span>}
+                {seriesName && <span class="book__tp-of">of the</span>}
+                {seriesName && <span class="book__tp-series">{seriesName}</span>}
+                <span class="book__tp-author">{author}</span>
+              </span>
+            </span>
+          </span>
+        </span>
+      </span>
+    </button>
+
+    <!-- Accessible, correctly ordered copy of the blurb for assistive tech. -->
+    <p class="sr-only">{paragraphs.join(' ')}</p>
+  </div>
+
+  <span class="book__hint" aria-hidden="true">Hover, focus, or tap to open</span>
+</div>
+
+<style>
+  /* Animatable length so the book can smoothly grow on open. */
+  @property --page-w {
+    syntax: '<length>';
+    inherits: true;
+    initial-value: 0px;
+  }
+
+  .bookwrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+    --closed-w: clamp(9rem, 44vw, 15rem); /* closed cover width */
+    --page-bg: #ece6d8; /* warm off-white paper */
+    --page-bg-2: #e3dcc9; /* page edge / shade */
+    --page-ink: #2a2620; /* printed-ink text */
+  }
+
+  /* Reserves only the CLOSED footprint; the open book overflows this box and
+     overlays the page, so expanding never reflows the surrounding layout. */
+  .book {
+    position: relative;
+    width: var(--closed-w);
+    height: calc(var(--closed-w) * 1.5);
+  }
+
+  /* Full-viewport dimmer that spotlights the open book. */
+  .book__backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(5, 8, 14, 0.55),
+      rgba(5, 8, 14, 0.78)
+    );
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.75s ease;
+  }
+
+  /* The button is the absolutely-centred stage. Its transparent areas are
+     click-through so they never block surrounding content. */
+  .book__toggle {
+    appearance: none;
+    background: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    border-radius: 0.6rem;
+    /* Grows from the closed cover width to most of the screen. */
+    --page-w: var(--closed-w);
+    transition: --page-w 0.75s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  /* Open spread footprint and the 3D viewing space.
+     NOTE: deliberately no `filter`, `container-type`, `overflow`, `opacity`
+     or `clip-path` anywhere on this element or .book__spread / .book__leaf —
+     each of those flattens a preserve-3d subtree, which would disable
+     backface culling and show the reverse of the cover instead of the inside
+     page. Depth is provided with box-shadow (which does not flatten). */
+  .book__viewport {
+    position: relative;
+    display: block;
+    width: calc(var(--page-w) * 2);
+    height: calc(var(--page-w) * 1.5);
+    perspective: 2600px;
+  }
+
+  /* Shifts right when closed so the lone cover reads as centred, then slides
+     back to centre the full spread when open. */
+  .book__spread {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    transform: translateX(-25%) rotateX(2deg);
+    transition: transform 0.75s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .book__page,
+  .book__face {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: var(--page-w);
+    border-radius: 0.12rem 0.3rem 0.3rem 0.12rem;
+    overflow: hidden;
+  }
+
+  /* Right inside page, fixed against the spine (centre of the spread). */
+  .book__page--right {
+    right: 0;
+    pointer-events: auto;
+    background: linear-gradient(180deg, var(--page-bg), var(--page-bg-2));
+    box-shadow:
+      inset 16px 0 26px -16px rgba(0, 0, 0, 0.55),
+      2px 3px 12px rgba(0, 0, 0, 0.4);
+  }
+  .book__page--right::after {
+    content: '';
+    position: absolute;
+    inset: 0 -3px 0 auto;
+    width: 3px;
+    background: repeating-linear-gradient(
+      180deg,
+      var(--page-bg-2) 0,
+      var(--page-bg-2) 1px,
+      #cdc4ac 2px,
+      var(--page-bg-2) 3px
+    );
+  }
+
+  /* Hinged leaf: occupies the right slot closed, swings left when open.
+     No `filter` here — it would flatten the faces and break the two-sided
+     flip; the grounding shadow lives on the cover face instead. */
+  .book__leaf {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: var(--page-w);
+    height: 100%;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    transform: rotateY(0deg);
+    transition: transform 0.75s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  /* Two faces of the leaf, separated slightly in Z so they read as a real
+     two-sided board and never z-fight. Backface culling shows the cover when
+     closed and the inside page when open. */
+  .book__face {
+    inset: 0;
+    width: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  .book__face--front {
+    pointer-events: auto;
+    transform: translateZ(1px);
+    background: #0b0f18;
+    box-shadow:
+      -6px 0 12px rgba(0, 0, 0, 0.4) inset,
+      0 22px 30px rgba(0, 0, 0, 0.5);
+  }
+  .book__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Back of the leaf = left inside page, pre-rotated so its text reads
+     correctly once the leaf has flipped open. */
+  .book__face--back {
+    pointer-events: auto;
+    transform: rotateY(180deg) translateZ(1px);
+    background: linear-gradient(180deg, var(--page-bg), var(--page-bg-2));
+    box-shadow: inset -16px 0 26px -16px rgba(0, 0, 0, 0.55);
+  }
+  /* Inside title page — recreated in CSS on the same parchment as the right
+     page so both halves read as one open book. Everything scales with the
+     page width (--page-w) and is centred; sizes have legible floors/caps. */
+  .book__title-page {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--page-w) * 0.03);
+    padding: clamp(0.9rem, calc(var(--page-w) * 0.08), 2rem);
+    text-align: center;
+    color: var(--page-ink);
+    font-family: var(--font-serif);
+  }
+  .book__tp-title {
+    font-size: clamp(1.1rem, calc(var(--page-w) * 0.12), 2.4rem);
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: 0.01em;
+  }
+  .book__tp-orn {
+    font-size: clamp(0.7rem, calc(var(--page-w) * 0.05), 1.1rem);
+    color: #8a7a55;
+    margin: calc(var(--page-w) * 0.015) 0;
+    line-height: 1;
+  }
+  .book__tp-book {
+    font-size: clamp(0.6rem, calc(var(--page-w) * 0.036), 0.9rem);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #5a4f3a;
+  }
+  .book__tp-of {
+    font-size: clamp(0.5rem, calc(var(--page-w) * 0.026), 0.72rem);
+    font-style: italic;
+    color: #6b5f49;
+  }
+  .book__tp-series {
+    font-size: clamp(0.78rem, calc(var(--page-w) * 0.052), 1.25rem);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--page-ink);
+  }
+  .book__tp-author {
+    margin-top: calc(var(--page-w) * 0.07);
+    font-size: clamp(0.66rem, calc(var(--page-w) * 0.044), 1.05rem);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #4a4334;
+  }
+
+  .book__spine {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 5%;
+    min-width: 8px;
+    background: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.6),
+      rgba(0, 0, 0, 0.15) 60%,
+      transparent
+    );
+    pointer-events: none;
+  }
+  .book__sheen {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.16) 48%,
+      transparent 62%
+    );
+    opacity: 0;
+    transition: opacity 0.75s ease;
+    pointer-events: none;
+  }
+
+  /* Printed text on the right page. Both the font size and the page height
+     scale with --page-w, so once the blurb + CTA fit at one size they fit at
+     every size. Tuned so the whole spread shows with no scrollbar. */
+  .book__text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.38em;
+    padding: clamp(0.75rem, calc(var(--page-w) * 0.048), 1.2rem);
+    color: var(--page-ink);
+    font-family: var(--font-serif);
+    overflow: hidden;
+  }
+  .book__body {
+    font-size: clamp(0.62rem, calc(var(--page-w) * 0.0375), 0.9rem);
+    line-height: 1.38;
+    text-align: justify;
+    hyphens: auto;
+  }
+  .book__body--lead::first-letter {
+    float: left;
+    font-size: 2.4em;
+    line-height: 0.74;
+    padding: 0.04em 0.08em 0 0;
+    font-weight: 700;
+    color: #5a4a2e;
+  }
+  .book__rule {
+    margin-top: 0.1rem;
+    height: 1px;
+    width: 38%;
+    background: linear-gradient(to right, #b9ad90, transparent);
+  }
+  .book__buy {
+    font-size: clamp(0.6rem, calc(var(--page-w) * 0.0335), 0.82rem);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #6b3f2a;
+  }
+
+  /* --- Open states: hover, keyboard focus, or toggled (tap) --- */
+  .book__toggle:hover,
+  .book__toggle:focus-visible,
+  .book__toggle[aria-expanded='true'] {
+    --page-w: min(40vw, 23rem, 42vh);
+    z-index: 30;
+  }
+  .book:has(.book__toggle:hover) .book__backdrop,
+  .book:has(.book__toggle:focus-visible) .book__backdrop,
+  .book:has(.book__toggle[aria-expanded='true']) .book__backdrop {
+    opacity: 1;
+  }
+  .book__toggle:hover .book__spread,
+  .book__toggle:focus-visible .book__spread,
+  .book__toggle[aria-expanded='true'] .book__spread {
+    transform: translateX(0) rotateX(2deg);
+  }
+  .book__toggle:hover .book__leaf,
+  .book__toggle:focus-visible .book__leaf,
+  .book__toggle[aria-expanded='true'] .book__leaf {
+    transform: rotateY(-178deg) translateZ(1px);
+  }
+  .book__toggle:hover .book__sheen,
+  .book__toggle:focus-visible .book__sheen,
+  .book__toggle[aria-expanded='true'] .book__sheen {
+    opacity: 1;
+  }
+
+  .book__hint {
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    letter-spacing: 0.02em;
+  }
+
+  /* Focus ring on the visible cover, not the wide click-through box. */
+  .book__toggle:focus-visible {
+    outline: none;
+  }
+  .book__toggle:focus-visible .book__face--front {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 4px;
+  }
+</style>
+
+<script>
+  // Click/tap toggles the persisted open state (touch devices have no hover).
+  // Hover and focus are handled purely in CSS.
+  document
+    .querySelectorAll<HTMLButtonElement>('.book__toggle')
+    .forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+      });
+    });
+</script>
