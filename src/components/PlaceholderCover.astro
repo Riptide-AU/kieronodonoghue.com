@@ -1,0 +1,179 @@
+---
+/**
+ * CSS placeholder book cover for forthcoming titles that have no artwork yet.
+ * It matches the Soul War Saga typography (serif, letter-spaced caps, the ❦
+ * ornament used on the Emergence inside title page) but in a distinct palette
+ * so it reads clearly as a placeholder while still feeling premium.
+ *
+ *  - variant="steel"  → silver / blue / steel, "Coming Soon" (in development)
+ *  - variant="locked" → gold / ivory / black, deliberately unrevealed with a
+ *                        padlock and "Cover Reveal Coming Soon" (in planning)
+ *
+ * It fills its parent's width at a 2:3 book ratio, and the text scales with
+ * the cover (container queries) so it looks right both small (cards) and
+ * large (the book page hero).
+ */
+interface Props {
+  title: string;
+  /** e.g. "Book Two of the Soul War Saga". */
+  seriesText?: string;
+  variant: 'steel' | 'locked';
+  /** Override the default treatment label. */
+  label?: string;
+  class?: string;
+}
+
+const { title, seriesText, variant, label, class: className } = Astro.props;
+const defaultLabel = variant === 'locked' ? 'Cover Reveal Coming Soon' : 'Coming Soon';
+const treatmentLabel = label ?? defaultLabel;
+---
+
+<div class:list={['ph', className]} data-variant={variant} aria-hidden="true">
+  <span class="ph__series">{seriesText}</span>
+
+  <span class="ph__center">
+    {
+      variant === 'locked' && (
+        <svg
+          class="ph__lock"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="4.5" y="10.5" width="15" height="10" rx="2" />
+          <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" />
+          <circle cx="12" cy="15" r="1.4" />
+          <path d="M12 16.4v2" />
+        </svg>
+      )
+    }
+    <span class="ph__title">{title}</span>
+    <span class="ph__orn">&#10086;</span>
+  </span>
+
+  <span class="ph__label">{treatmentLabel}</span>
+</div>
+
+<style>
+  .ph {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    border-radius: 0.18rem 0.4rem 0.4rem 0.18rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    padding: 9% 8%;
+    font-family: var(--font-serif);
+    /* Spine shading on the left + depth shadow, matching the real covers. */
+    box-shadow:
+      inset 7px 0 14px -8px rgba(0, 0, 0, 0.7),
+      0 18px 30px rgba(0, 0, 0, 0.45);
+    container-type: inline-size;
+  }
+
+  /* --- Steel (Evolution): silver / blue / steel --- */
+  .ph[data-variant='steel'] {
+    background:
+      radial-gradient(120% 80% at 50% 0%, rgba(150, 178, 214, 0.18), transparent 60%),
+      linear-gradient(160deg, #16202f 0%, #243348 55%, #33465f 100%);
+    color: #dbe4f0;
+    border: 1px solid rgba(159, 184, 214, 0.35);
+  }
+  .ph[data-variant='steel'] .ph__series {
+    color: #9fb3cc;
+  }
+  .ph[data-variant='steel'] .ph__title {
+    color: #e6edf6;
+    text-shadow: 0 1px 10px rgba(120, 160, 210, 0.45);
+  }
+  .ph[data-variant='steel'] .ph__orn {
+    color: #7e97b8;
+  }
+  .ph[data-variant='steel'] .ph__label {
+    color: #cdd9ea;
+    border-color: rgba(159, 184, 214, 0.5);
+    background: rgba(120, 150, 195, 0.12);
+  }
+
+  /* --- Locked (Equilibrium): pale gold / ivory / black, unrevealed --- */
+  .ph[data-variant='locked'] {
+    background:
+      radial-gradient(110% 70% at 50% 38%, rgba(216, 199, 154, 0.1), transparent 62%),
+      radial-gradient(ellipse at center, #161310 0%, #07060a 100%);
+    color: #d8c79a;
+    border: 1px solid rgba(216, 199, 154, 0.28);
+  }
+  .ph[data-variant='locked'] .ph__series {
+    color: #b9ad8b;
+  }
+  .ph[data-variant='locked'] .ph__title {
+    color: #e7dcc0;
+    /* Slightly veiled to read as intentionally unrevealed. */
+    opacity: 0.92;
+    text-shadow: 0 1px 12px rgba(216, 199, 154, 0.25);
+  }
+  .ph[data-variant='locked'] .ph__orn {
+    color: #9c8c63;
+  }
+  .ph[data-variant='locked'] .ph__lock {
+    width: 16cqw;
+    height: 16cqw;
+    color: #cbb784;
+    opacity: 0.9;
+    margin-bottom: 4cqw;
+  }
+  .ph[data-variant='locked'] .ph__label {
+    color: #e7dcc0;
+    border-color: rgba(216, 199, 154, 0.45);
+    background: rgba(216, 199, 154, 0.08);
+  }
+
+  .ph__series {
+    font-size: clamp(0.5rem, 4cqw, 0.82rem);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    line-height: 1.3;
+  }
+
+  .ph__center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .ph__title {
+    font-size: clamp(0.9rem, 13cqw, 2.6rem);
+    font-weight: 600;
+    line-height: 1.04;
+    letter-spacing: 0.01em;
+  }
+  .ph__orn {
+    font-size: clamp(0.7rem, 6cqw, 1.4rem);
+    margin-top: 3cqw;
+    line-height: 1;
+  }
+
+  .ph__label {
+    font-size: clamp(0.5rem, 3.6cqw, 0.8rem);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-weight: 600;
+    padding: 1.6cqw 4cqw;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ph {
+      box-shadow:
+        inset 7px 0 14px -8px rgba(0, 0, 0, 0.7),
+        0 10px 18px rgba(0, 0, 0, 0.4);
+    }
+  }
+</style>

@@ -2,8 +2,10 @@
 import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PlaceholderCover from '../../components/PlaceholderCover.astro';
 
-// Newest first; books without a publish date fall back to series order.
+// Series/release order: by publish date, then book number (so the Soul War
+// Saga reads One → Two → Three even before later books have dates).
 const books = (await getCollection('books', (b) => !b.data.draft)).sort(
   (a, b) =>
     (b.data.publishedDate?.valueOf() ?? 0) -
@@ -15,11 +17,16 @@ const ordinal = (n?: number) =>
   n
     ? ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'][n] ?? `${n}`
     : undefined;
+
+const statusClass = (status: string) =>
+  status === 'Published'
+    ? 'border-accent/50 text-accent'
+    : 'border-border text-muted';
 ---
 
 <BaseLayout
   title="Books"
-  description="Fiction by Kieron O’Donoghue, including Emergence — book one of the Soul War Saga, an epic fantasy series."
+  description="Fiction by Kieron O’Donoghue — the Soul War Saga, an ongoing epic fantasy series beginning with Emergence."
   backgroundTheme="books"
 >
   <section class="mx-auto max-w-5xl px-5 py-16">
@@ -30,43 +37,65 @@ const ordinal = (n?: number) =>
       Books
     </h1>
     <p class="mt-4 max-w-2xl text-lg text-muted">
-      Alongside the analytical work, I write fiction. This is where my published
-      novels live.
+      Alongside the analytical work, I write fiction. The Soul War Saga is an
+      ongoing epic fantasy series — here's what's out and what's coming next.
     </p>
 
     {
       books.length > 0 ? (
         <div class="mt-12 flex flex-col gap-8">
           {books.map((book) => {
+            const label = ordinal(book.data.bookNumber);
             const seriesLine = book.data.series
-              ? `${book.data.series}${
-                  book.data.bookNumber
-                    ? ` — Book ${ordinal(book.data.bookNumber)}`
-                    : ''
-                }`
+              ? `${book.data.series}${label ? ` — Book ${label}` : ''}`
               : undefined;
+            const seriesText =
+              book.data.series && label
+                ? `Book ${label} of the ${book.data.series}`
+                : book.data.series;
+            const summary = book.data.blurb
+              ? book.data.blurb.split('\n\n')[0]
+              : book.data.teaser;
             return (
               <a
                 href={`/books/${book.id}/`}
                 class="group grid gap-6 rounded-2xl border border-border bg-surface p-6 transition-colors hover:border-accent/60 hover:bg-surface-2 sm:grid-cols-[8rem_1fr] sm:gap-8 sm:p-8"
               >
-                <div class="overflow-hidden rounded-md border border-border shadow-lg shadow-black/40">
-                  <Image
-                    src={book.data.coverImage}
-                    alt={book.data.coverImageAlt}
-                    widths={[160, 256, 320]}
-                    sizes="8rem"
-                    loading="eager"
-                    decoding="async"
-                    class="aspect-[2/3] h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                {book.data.coverImage ? (
+                  <div class="overflow-hidden rounded-md border border-border shadow-lg shadow-black/40">
+                    <Image
+                      src={book.data.coverImage}
+                      alt={book.data.coverImageAlt ?? book.data.title}
+                      widths={[160, 256, 320]}
+                      sizes="8rem"
+                      loading="eager"
+                      decoding="async"
+                      class="aspect-[2/3] h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                    />
+                  </div>
+                ) : (
+                  <PlaceholderCover
+                    title={book.data.title}
+                    seriesText={seriesText}
+                    variant={book.data.placeholderCover ?? 'steel'}
                   />
-                </div>
+                )}
                 <div class="min-w-0">
-                  {seriesLine && (
-                    <p class="text-xs font-semibold uppercase tracking-wider text-accent">
-                      {seriesLine}
-                    </p>
-                  )}
+                  <div class="flex flex-wrap items-center gap-2">
+                    {seriesLine && (
+                      <p class="text-xs font-semibold uppercase tracking-wider text-accent">
+                        {seriesLine}
+                      </p>
+                    )}
+                    <span
+                      class:list={[
+                        'rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider',
+                        statusClass(book.data.status),
+                      ]}
+                    >
+                      {book.data.status}
+                    </span>
+                  </div>
                   <h2 class="mt-1 text-2xl font-bold tracking-tight text-ink">
                     {book.data.title}
                   </h2>
@@ -80,9 +109,11 @@ const ordinal = (n?: number) =>
                       ))}
                     </div>
                   )}
-                  <p class="mt-4 line-clamp-3 text-sm leading-relaxed text-muted">
-                    {book.data.blurb.split('\n\n')[0]}
-                  </p>
+                  {summary && (
+                    <p class="mt-4 line-clamp-3 text-sm leading-relaxed text-muted">
+                      {summary}
+                    </p>
+                  )}
                   <span class="mt-4 inline-block text-sm font-medium text-accent group-hover:text-accent-strong">
                     View book →
                   </span>

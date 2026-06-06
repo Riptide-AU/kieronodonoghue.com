@@ -199,7 +199,7 @@ const featuredBook = (await getCollection('books', (b) => !b.data.draft))
 
   <!-- BOOKS / AUTHOR -->
   {
-    featuredBook && (
+    featuredBook && featuredBook.data.coverImage && (
       <section class="mx-auto max-w-5xl px-5 py-10">
         <div class="overflow-hidden rounded-2xl border border-border bg-surface p-6 md:p-8">
           <div class="grid items-center gap-6 sm:grid-cols-[6rem_1fr] sm:gap-8">
@@ -209,7 +209,7 @@ const featuredBook = (await getCollection('books', (b) => !b.data.draft))
             >
               <Image
                 src={featuredBook.data.coverImage}
-                alt={featuredBook.data.coverImageAlt}
+                alt={featuredBook.data.coverImageAlt ?? featuredBook.data.title}
                 widths={[120, 192, 240]}
                 sizes="6rem"
                 loading="lazy"

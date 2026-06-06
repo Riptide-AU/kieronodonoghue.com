@@ -4,6 +4,7 @@ import { Image } from 'astro:assets';
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import BookCover from '../../components/BookCover.astro';
+import PlaceholderCover from '../../components/PlaceholderCover.astro';
 import { SITE } from '../../consts';
 
 export const getStaticPaths = (async () => {
@@ -17,6 +18,10 @@ export const getStaticPaths = (async () => {
 const { entry } = Astro.props;
 const data = entry.data;
 
+// Published books get the full interactive hero; everything else (In
+// Development, In Planning, …) renders as a forthcoming placeholder.
+const isPublished = data.status === 'Published';
+
 const ordinal =
   ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'][
     data.bookNumber ?? 0
@@ -26,8 +31,16 @@ const seriesLine = data.series
   ? `${data.series}${data.bookNumber ? ` — Book ${ordinal}` : ''}`
   : undefined;
 
-// Blurb is stored as a single multi-paragraph string in frontmatter.
-const blurbParagraphs = data.blurb.split('\n\n').map((p) => p.trim()).filter(Boolean);
+// "Book Two of the Soul War Saga" line printed on the placeholder cover.
+const seriesText =
+  data.series && data.bookNumber
+    ? `Book ${ordinal} of the ${data.series}`
+    : data.series;
+
+// Blurb (published only) — a single multi-paragraph string in frontmatter.
+const blurbParagraphs = data.blurb
+  ? data.blurb.split('\n\n').map((p) => p.trim()).filter(Boolean)
+  : [];
 
 // Optional sample excerpt, split into paragraphs on blank lines. Rendered as
 // plain text (not Markdown) so the punctuation and dialogue stay verbatim.
@@ -35,29 +48,35 @@ const excerptParagraphs = data.excerpt
   ? data.excerpt.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
   : [];
 
-const metaDescription = data.description ?? blurbParagraphs[0];
+const metaDescription =
+  data.description ?? blurbParagraphs[0] ?? data.teaser ?? SITE.description;
 
 // Absolute URLs for canonical + structured data.
 const canonical = new URL(`/books/${entry.id}/`, SITE.url).href;
-const coverUrl = new URL(data.coverImage.src, SITE.url).href;
+const coverUrl = data.coverImage
+  ? new URL(data.coverImage.src, SITE.url).href
+  : undefined;
 
-// schema.org Book — associates Kieron O'Donoghue, the title, the series,
-// the genre, and the Amazon purchase link for rich results / brand SEO.
+// schema.org Book — associates Kieron O'Donoghue, the title, the series and
+// genre. `creativeWorkStatus` records the lifecycle stage; forthcoming books
+// deliberately omit offers/bookFormat/datePublished so they are never
+// presented as published or purchasable.
 const bookSchema = {
   '@context': 'https://schema.org',
   '@type': 'Book',
   name: data.title,
   url: canonical,
-  image: coverUrl,
   description: metaDescription,
   inLanguage: SITE.lang,
-  bookFormat: 'https://schema.org/EBook',
+  creativeWorkStatus: data.status,
   genre: data.genre,
   author: {
     '@type': 'Person',
     name: data.author,
     url: SITE.url,
   },
+  ...(coverUrl && { image: coverUrl }),
+  ...(isPublished && { bookFormat: 'https://schema.org/EBook' }),
   ...(data.series && {
     isPartOf: {
       '@type': 'BookSeries',
@@ -68,11 +87,13 @@ const bookSchema = {
   ...(data.publishedDate && {
     datePublished: data.publishedDate.toISOString().slice(0, 10),
   }),
-  offers: {
-    '@type': 'Offer',
-    url: data.buyLink,
-    availability: 'https://schema.org/InStock',
-  },
+  ...(data.buyLink && {
+    offers: {
+      '@type': 'Offer',
+      url: data.buyLink,
+      availability: 'https://schema.org/InStock',
+    },
+  }),
 };
 ---
 
@@ -106,88 +127,138 @@ const bookSchema = {
       </p>
 
       {
-        data.genre.length > 0 && (
-          <div class="mt-5 flex flex-wrap justify-center gap-2">
-            {data.genre.map((g) => (
-              <span class="rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-ink/90">
-                {g}
-              </span>
-            ))}
-          </div>
-        )
-      }
-
-      <div class="mt-7">
-        <a
-          href={data.buyLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex items-center gap-2 rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-[#06231f] transition-colors hover:bg-accent-strong"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-            <path d="M3 6h18" />
-            <path d="M16 10a4 4 0 0 1-8 0" />
-          </svg>
-          Buy on Amazon
-        </a>
-      </div>
-    </div>
-
-    <!-- Interactive book hero: closed it shows the cover; opening it grows to
-         fill most of the screen and reveals the full blurb across two pages. -->
-    <div class="mt-12 flex justify-center pb-4">
-      <BookCover
-        src={data.coverImage}
-        alt={data.coverImageAlt}
-        title={data.title}
-        author={data.author}
-        seriesName={data.series}
-        bookLabel={data.bookNumber ? `Book ${ordinal}` : undefined}
-        paragraphs={blurbParagraphs}
-      />
-    </div>
-  </section>
-
-  <!-- EXCERPT -->
-  <section class="mx-auto max-w-3xl px-5 py-6">
-    <div class="rounded-2xl border border-border bg-surface p-6 md:p-8">
-      <h2 class="text-xs font-semibold uppercase tracking-wider text-accent">
-        Excerpt
-      </h2>
-      {
-        excerptParagraphs.length > 0 ? (
-          <div class="prose mt-4 max-w-none">
-            {excerptParagraphs.map((p) => (
-              <p>{p}</p>
-            ))}
-          </div>
+        isPublished ? (
+          <>
+            {data.genre.length > 0 && (
+              <div class="mt-5 flex flex-wrap justify-center gap-2">
+                {data.genre.map((g) => (
+                  <span class="rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-ink/90">
+                    {g}
+                  </span>
+                ))}
+              </div>
+            )}
+            {data.buyLink && (
+              <div class="mt-7">
+                <a
+                  href={data.buyLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-2 rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-[#06231f] transition-colors hover:bg-accent-strong"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                    <path d="M3 6h18" />
+                    <path d="M16 10a4 4 0 0 1-8 0" />
+                  </svg>
+                  Buy on Amazon
+                </a>
+              </div>
+            )}
+          </>
         ) : (
-          <p class="mt-3 text-sm leading-relaxed text-muted">
-            A sample chapter from {data.title} will be published here soon. In
-            the meantime, you can read the opening on Amazon.
-          </p>
+          <div class="mt-5 flex justify-center">
+            <span class="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent-soft px-3 py-1 text-xs font-semibold uppercase tracking-wider text-accent">
+              <span class="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
+              {data.status}
+            </span>
+          </div>
         )
       }
     </div>
+
+    {
+      isPublished && data.coverImage ? (
+        /* Published: the interactive book that opens to reveal the blurb. */
+        <div class="mt-12 flex justify-center pb-4">
+          <BookCover
+            src={data.coverImage}
+            alt={data.coverImageAlt ?? data.title}
+            title={data.title}
+            author={data.author}
+            seriesName={data.series}
+            bookLabel={data.bookNumber ? `Book ${ordinal}` : undefined}
+            paragraphs={blurbParagraphs}
+          />
+        </div>
+      ) : (
+        /* Forthcoming: a static cover as the main visual — the real artwork
+           when it exists, otherwise a CSS placeholder — plus status/teaser. */
+        <div class="mt-12 flex flex-col items-center pb-4">
+          <div class="w-52 sm:w-60">
+            {data.coverImage ? (
+              <div class="overflow-hidden rounded-md border border-border shadow-lg shadow-black/40">
+                <Image
+                  src={data.coverImage}
+                  alt={data.coverImageAlt ?? data.title}
+                  widths={[240, 384, 480, 640]}
+                  sizes="(min-width: 640px) 15rem, 13rem"
+                  loading="eager"
+                  decoding="async"
+                  class="block h-auto w-full"
+                />
+              </div>
+            ) : (
+              <PlaceholderCover
+                title={data.title}
+                seriesText={seriesText}
+                variant={data.placeholderCover ?? 'steel'}
+              />
+            )}
+          </div>
+          {data.teaser && (
+            <p class="mt-9 max-w-xl text-center text-lg italic leading-relaxed text-ink/90">
+              {data.teaser}
+            </p>
+          )}
+          {data.note && (
+            <p class="mt-4 max-w-xl text-center text-sm leading-relaxed text-muted">
+              {data.note}
+            </p>
+          )}
+        </div>
+      )
+    }
   </section>
 
-  <!-- PROMOTIONAL BANNER (below the excerpt) — cinematic feature panel that
-       spans the site's full content width (max-w-5xl), wider than the
-       reading-column sections above and below it. -->
+  {/* EXCERPT + BANNER — published books only */}
   {
-    data.bannerImage && (
+    isPublished && (
+      <section class="mx-auto max-w-3xl px-5 py-6">
+        <div class="rounded-2xl border border-border bg-surface p-6 md:p-8">
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-accent">
+            Excerpt
+          </h2>
+          {excerptParagraphs.length > 0 ? (
+            <div class="prose mt-4 max-w-none">
+              {excerptParagraphs.map((p) => (
+                <p>{p}</p>
+              ))}
+            </div>
+          ) : (
+            <p class="mt-3 text-sm leading-relaxed text-muted">
+              A sample chapter from {data.title} will be published here soon. In
+              the meantime, you can read the opening on Amazon.
+            </p>
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  {
+    isPublished && data.bannerImage && (
       <section class="mx-auto max-w-5xl px-5 py-14">
         <div class="overflow-hidden rounded-2xl border border-border bg-surface shadow-xl shadow-black/40 ring-1 ring-accent/10">
           <Image

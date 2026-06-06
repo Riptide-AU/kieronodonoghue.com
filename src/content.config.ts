@@ -104,20 +104,36 @@ const books = defineCollection({
       /** Position within the series (1 = book one). */
       bookNumber: z.number().int().positive().optional(),
       author: z.string().default('Kieron O’Donoghue'),
+      /**
+       * Lifecycle status. 'Published' books get the full interactive hero,
+       * blurb, excerpt and purchase link; everything else (e.g. 'In
+       * Development', 'In Planning') renders as a forthcoming placeholder.
+       */
+      status: z.string().default('Published'),
       /** Genre tags, e.g. ["Fantasy", "Epic Fantasy"]. */
       genre: z.array(z.string()).default([]),
-      /** Marketing blurb (multi-paragraph, separated by blank lines). */
-      blurb: z.string(),
+      /** Marketing blurb (multi-paragraph). Optional for forthcoming books. */
+      blurb: z.string().optional(),
+      /** Short teaser line, used for forthcoming/placeholder books. */
+      teaser: z.string().optional(),
+      /** Short note shown on placeholder pages (why it's sparse, what's next). */
+      note: z.string().optional(),
       /** Optional sample excerpt (multi-paragraph, separated by blank lines).
        *  Stored verbatim so punctuation/dialogue is preserved exactly. */
       excerpt: z.string().optional(),
-      /** Optional shorter meta description; falls back to the blurb. */
+      /** Optional shorter meta description; falls back to the blurb/teaser. */
       description: z.string().optional(),
-      /** Retailer purchase link (Amazon for now). */
-      buyLink: z.string().url(),
+      /** Retailer purchase link (Amazon). Absent for forthcoming books. */
+      buyLink: z.string().url().optional(),
+      /**
+       * Placeholder cover treatment for books with no artwork yet:
+       * 'steel' (silver/blue, "Coming Soon") or 'locked' (gold/ivory/black,
+       * unrevealed "Cover Reveal Coming Soon"). Ignored when coverImage is set.
+       */
+      placeholderCover: z.enum(['steel', 'locked']).optional(),
       /** Front cover, used in the interactive book hero and cards. */
-      coverImage: image(),
-      coverImageAlt: z.string().min(1),
+      coverImage: image().optional(),
+      coverImageAlt: z.string().min(1).optional(),
       /** Optional inside cover / title page, shown on the left page when the
        *  interactive book opens. Falls back to a printed paper page. */
       insideCoverImage: image().optional(),
