@@ -15,9 +15,11 @@ interface Props {
   publishedDate?: Date;
   modifiedDate?: Date;
   noindex?: boolean;
+  /** Colour profile for the animated background ('default' | 'books'). */
+  backgroundTheme?: 'default' | 'books';
 }
 
-const seoProps = Astro.props;
+const { backgroundTheme = 'default', ...seoProps } = Astro.props;
 ---
 
 <!doctype html>
@@ -33,7 +35,7 @@ const seoProps = Astro.props;
     <SEO {...seoProps} />
   </head>
   <body class="flex min-h-screen flex-col">
-    <AnimatedBackground />
+    <AnimatedBackground theme={backgroundTheme} />
     <a href="#main" class="skip-link">Skip to content</a>
     <Header />
     <main id="main" class="flex-1">

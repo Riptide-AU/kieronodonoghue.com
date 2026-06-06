@@ -3,6 +3,16 @@ import { BACKGROUND } from '../consts';
 
 // Render nothing at all when disabled — no canvas, no script, zero cost.
 const { enabled, variant } = BACKGROUND;
+
+interface Props {
+  /**
+   * Colour profile for the background. Same animation, different palette.
+   * 'default' = site blue-green. 'books' = dark fantasy red / silvery-blue.
+   * Pages opt in via BaseLayout's `backgroundTheme` prop.
+   */
+  theme?: 'default' | 'books';
+}
+const { theme = 'default' } = Astro.props;
 ---
 
 {
@@ -10,6 +20,7 @@ const { enabled, variant } = BACKGROUND;
     <canvas
       id="bg-canvas"
       data-variant={variant}
+      data-theme={theme}
       aria-hidden="true"
       class="pointer-events-none fixed inset-0 -z-10 h-full w-full"
     />
@@ -25,12 +36,49 @@ const { enabled, variant } = BACKGROUND;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        // Variant from the settings flag, with an optional ?bg= override for previewing.
+        // Variant + theme come from data-attributes, with optional ?bg= and
+        // ?theme= overrides for previewing.
         const params = new URLSearchParams(location.search);
         const variant = params.get('bg') || canvas.dataset.variant || 'network';
+        const themeName =
+          params.get('theme') || canvas.dataset.theme || 'default';
 
-        // Muted blue-green accent, matching the site palette.
-        const accent = (a) => 'rgba(92,192,171,' + a + ')';
+        // Colour profiles. `base` drives structural marks (grid dots, network
+        // lines); `pulses` is the palette the moving stars/streams draw from at
+        // random; `wash` matches the page background so trails fade cleanly.
+        // The wash stays navy/slate for every theme so the base never tints.
+        const THEMES = {
+          default: {
+            base: [92, 192, 171],
+            pulses: [[92, 192, 171]],
+            wash: 'rgba(13, 19, 32, 0.20)',
+          },
+          books: {
+            // Muted slate-blue for any structural marks (kept subtle).
+            base: [110, 130, 160],
+            // Deep red and silvery blue dominate; ember red is an occasional
+            // brighter accent (weighted by repetition).
+            pulses: [
+              [143, 29, 29], // deep red    #8f1d1d
+              [143, 29, 29],
+              [143, 29, 29],
+              [159, 184, 214], // silvery blue #9fb8d6
+              [159, 184, 214],
+              [159, 184, 214],
+              [194, 65, 45], // ember red   #c2412d
+            ],
+            wash: 'rgba(13, 19, 32, 0.20)',
+          },
+        };
+        const theme = THEMES[themeName] || THEMES.default;
+
+        // Colour helpers. `base` is the single structural colour; `pulse`
+        // picks a random colour from the theme palette for one element.
+        const rgba = (c, a) =>
+          'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')';
+        const base = (a) => rgba(theme.base, a);
+        const pickPulse = () =>
+          theme.pulses[(Math.random() * theme.pulses.length) | 0];
         const reduce = matchMedia('(prefers-reduced-motion: reduce)');
 
         let w = 0, h = 0, dpr = 1;
@@ -59,12 +107,13 @@ const { enabled, variant } = BACKGROUND;
           const horizontal = Math.random() < 0.5;
           const speed = 30 + Math.random() * 45;
           const dir = Math.random() < 0.5 ? 1 : -1;
+          const color = pickPulse();
           if (horizontal) {
             const row = Math.round((Math.random() * h) / gridGap) * gridGap;
-            return { horizontal: true, x: Math.random() * w, y: row, dir, speed };
+            return { horizontal: true, x: Math.random() * w, y: row, dir, speed, color };
           }
           const col = Math.round((Math.random() * w) / gridGap) * gridGap;
-          return { horizontal: false, x: col, y: Math.random() * h, dir, speed };
+          return { horizontal: false, x: col, y: Math.random() * h, dir, speed, color };
         }
 
         function init() {
@@ -77,6 +126,7 @@ const { enabled, variant } = BACKGROUND;
               vy: (Math.random() - 0.5) * 0.25,
               r: 1.2 + Math.random() * 1.4,
               p: Math.random() * Math.PI * 2,
+              color: pickPulse(),
             }));
           } else if (variant === 'grid') {
             packets = Array.from({ length: 7 }, spawnPacket);
@@ -95,6 +145,8 @@ const { enabled, variant } = BACKGROUND;
                   speed: L.speed[0] + Math.random() * (L.speed[1] - L.speed[0]),
                   // Per-column brightness jitter so pulses don't look uniform.
                   bright: 0.75 + Math.random() * 0.45,
+                  // Colour drawn from the theme palette (red / silvery blue).
+                  color: pickPulse(),
                 });
               }
             }
@@ -108,6 +160,7 @@ const { enabled, variant } = BACKGROUND;
               speed: 26 + Math.random() * 44,
               len: 7 + Math.floor(Math.random() * 11),
               active: Math.random() < 0.72,
+              color: pickPulse(),
             }));
           }
         }
@@ -126,7 +179,7 @@ const { enabled, variant } = BACKGROUND;
               const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
               const dist = Math.hypot(dx, dy);
               if (dist < D) {
-                ctx.strokeStyle = accent((1 - dist / D) * 0.16);
+                ctx.strokeStyle = base((1 - dist / D) * 0.16);
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.moveTo(nodes[i].x, nodes[i].y);
@@ -137,7 +190,7 @@ const { enabled, variant } = BACKGROUND;
           }
           for (const n of nodes) {
             const rr = n.r + Math.sin(n.p) * 0.4;
-            ctx.fillStyle = accent(0.45);
+            ctx.fillStyle = rgba(n.color, 0.45);
             ctx.beginPath();
             ctx.arc(n.x, n.y, rr, 0, Math.PI * 2);
             ctx.fill();
@@ -151,7 +204,7 @@ const { enabled, variant } = BACKGROUND;
             for (let x = gridGap; x < w; x += gridGap) {
               const a = 0.05 + 0.06 * Math.sin(phase + (x + y) * 0.01);
               if (a <= 0) continue;
-              ctx.fillStyle = accent(a);
+              ctx.fillStyle = base(a);
               ctx.fillRect(x - 0.8, y - 0.8, 1.6, 1.6);
             }
           }
@@ -164,15 +217,15 @@ const { enabled, variant } = BACKGROUND;
             const tailX = p.horizontal ? p.x - p.dir * 26 : p.x;
             const tailY = p.horizontal ? p.y : p.y - p.dir * 26;
             const g = ctx.createLinearGradient(tailX, tailY, p.x, p.y);
-            g.addColorStop(0, accent(0));
-            g.addColorStop(1, accent(0.5));
+            g.addColorStop(0, rgba(p.color, 0));
+            g.addColorStop(1, rgba(p.color, 0.5));
             ctx.strokeStyle = g;
             ctx.lineWidth = 1.5;
             ctx.beginPath();
             ctx.moveTo(tailX, tailY);
             ctx.lineTo(p.x, p.y);
             ctx.stroke();
-            ctx.fillStyle = accent(0.6);
+            ctx.fillStyle = rgba(p.color, 0.6);
             ctx.beginPath();
             ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2);
             ctx.fill();
@@ -190,12 +243,13 @@ const { enabled, variant } = BACKGROUND;
               c.speed = 26 + Math.random() * 44;
               c.len = 7 + Math.floor(Math.random() * 11);
               c.active = Math.random() < 0.85;
+              c.color = pickPulse();
             }
             for (let i = 0; i < c.len; i++) {
               const yy = c.y - i * lineH;
               if (yy < 0 || yy > h) continue;
               const a = (1 - i / c.len) * 0.28;
-              ctx.fillStyle = accent(i === 0 ? 0.6 : a);
+              ctx.fillStyle = rgba(c.color, i === 0 ? 0.6 : a);
               ctx.fillRect(c.x, yy, 2, 8);
             }
           }
@@ -204,7 +258,7 @@ const { enabled, variant } = BACKGROUND;
         function drawVerticalStreams(dt) {
           // Translucent base-coloured wash creates fading trails (data rain)
           // without a separate per-column trail loop — cheap and smooth.
-          ctx.fillStyle = 'rgba(13, 19, 32, 0.20)';
+          ctx.fillStyle = theme.wash;
           ctx.fillRect(0, 0, w, h);
           for (const c of vcols) {
             const L = V_LAYERS[c.layer];
@@ -214,13 +268,15 @@ const { enabled, variant } = BACKGROUND;
               c.y = -Math.random() * h * 0.4;
               c.speed = L.speed[0] + Math.random() * (L.speed[1] - L.speed[0]);
               c.bright = 0.75 + Math.random() * 0.45;
+              c.color = pickPulse();
             } else if (c.dir < 0 && c.y + L.head < 0) {
               c.y = h + Math.random() * h * 0.4;
               c.speed = L.speed[0] + Math.random() * (L.speed[1] - L.speed[0]);
               c.bright = 0.75 + Math.random() * 0.45;
+              c.color = pickPulse();
             }
             // Bright leading pulse; the wash above turns its path into a trail.
-            ctx.fillStyle = accent(Math.min(L.alpha * c.bright + 0.12, 0.85));
+            ctx.fillStyle = rgba(c.color, Math.min(L.alpha * c.bright + 0.12, 0.85));
             ctx.fillRect(c.x - L.lw / 2, c.y, L.lw, L.head);
           }
         }

@@ -52,11 +52,17 @@ export const CONTACT_EMAIL = 'kieron_o@outlook.com';
 export const SOCIAL = {
   linkedin: 'https://www.linkedin.com/in/kierono1/',
   facebook: 'https://www.facebook.com/kieron.odonoghue.7',
+  github: 'https://github.com/Riptide-AU',
+  amazon:
+    "https://www.amazon.com.au/s?i=books-single-index&rh=p_27%3AKieron%2BO%2527Donoghue&s=relevancerank&text=Kieron+O%27Donoghue",
 } as const;
 
-/** Links rendered in the footer and Links page, in display order. */
+/** Links rendered in the footer and Links page, in display order.
+ *  These also feed the Person schema `sameAs` (http entries only). */
 export const SOCIAL_LINKS = [
   { label: 'LinkedIn', href: SOCIAL.linkedin },
   { label: 'Facebook', href: SOCIAL.facebook },
+  { label: 'GitHub', href: SOCIAL.github },
+  { label: 'Amazon', href: SOCIAL.amazon },
   { label: 'Email', href: `mailto:${CONTACT_EMAIL}` },
 ] as const;
