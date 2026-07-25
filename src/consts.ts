@@ -53,8 +53,7 @@ export const SOCIAL = {
   linkedin: 'https://www.linkedin.com/in/kierono1/',
   facebook: 'https://www.facebook.com/kieron.odonoghue.7',
   github: 'https://github.com/Riptide-AU',
-  amazon:
-    "https://www.amazon.com.au/s?i=books-single-index&rh=p_27%3AKieron%2BO%2527Donoghue&s=relevancerank&text=Kieron+O%27Donoghue",
+  amazon: 'https://www.amazon.com/author/kieron_odonoghue',
   goodreads: 'https://www.goodreads.com/kieron_odonoghue',
 } as const;
 
