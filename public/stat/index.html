@@ -129,6 +129,8 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-
 .stim table.grid td{width:36px;text-align:center;font-weight:600}
 .stim svg{display:block;margin:8px 0;background:#fff}
 .rescard{margin:0 0 18px}.rescard li{margin:4px 0}
+table.sched{font-size:14px}table.sched td{vertical-align:top;min-width:110px}table.sched td:first-child{min-width:70px}
+tr.phrow td{background:#eef4f2;font-weight:600;color:#0f766e}tr.nowrow td{background:#fffbea}
 </style>
 </head>
 <body>
@@ -554,7 +556,7 @@ var ESSAY_CHECK = ["My first paragraph states a clear position (Part A) or idea 
 
 /* ---------- state ---------- */
 var KEY = "stat-course-v1";
-function blank(){ return {v:1,name:"",start:"",done:{},ans:{},attempts:[],errors:[],bench:{},essays:[],checks:{},del:{},updated:0}; }
+function blank(){ return {v:1,name:"",start:"",statDate:"",statTs:0,done:{},ans:{},attempts:[],errors:[],bench:{},essays:[],checks:{},del:{},updated:0}; }
 var S = blank(), CAN_SAVE = true;
 try { var raw = localStorage.getItem(KEY); if (raw) S = Object.assign(blank(), JSON.parse(raw)); }
 catch(e){ CAN_SAVE = false; }
@@ -591,7 +593,7 @@ function phaseOf(w){ return w<=8?[1,"Phase 1: Foundations"]:w<=16?[2,"Phase 2: S
 function renderSide(active){
   var openSc = active && active.lid ? LESSON[active.lid].sc : null;
   var h = '<div class="brand">STAT Course<small>From Year 9 to a score of 80+</small></div><div class="sep"></div><nav class="nav">';
-  h += link("#/","Dashboard",active.page==="dash")+link("#/guide","Course guide",active.page==="guide")+link("#/errors","Error log ("+S.errors.length+")",active.page==="errors")+link("#/essays","Essay studio ("+S.essays.length+")",active.page==="essays");
+  h += link("#/","Dashboard",active.page==="dash")+link("#/guide","Course guide",active.page==="guide")+link("#/schedule","Schedule",active.page==="schedule")+link("#/errors","Error log ("+S.errors.length+")",active.page==="errors")+link("#/essays","Essay studio ("+S.essays.length+")",active.page==="essays");
   COURSE.forEach(function(sc,i){
     var d=sc.lessons.filter(function(l){return S.done[l.id];}).length;
     h += '<div class="grp'+(openSc===sc.id?' open':'')+'"><button data-grp="'+sc.id+'"><span>'+(i+1)+'. '+esc(SHORT[sc.id])+'</span><span class="pct">'+d+'/'+sc.lessons.length+'</span></button><div class="les">';
@@ -691,6 +693,7 @@ function pageLesson(lid){
      + (idx<ORDER.length-1?'<a class="btn ghost" href="#/l/'+ORDER[idx+1]+'">Next →</a>':'<span></span>')+'</div>';
   $("main").innerHTML = h;
   quizzes(lid).forEach(function(q){ renderQuiz(lid,q); });
+  if(lid==="s6l1") datePracticeTable();
 }
 function toggleDone(lid){ S.done[lid]=!S.done[lid]; if(!S.done[lid]) delete S.done[lid]; save(); route(true); }
 
@@ -909,7 +912,7 @@ function mergeState(a, b){
   if (ra > (b.updated || 0)) return JSON.parse(JSON.stringify(a));
   var newer = (a.updated || 0) >= (b.updated || 0) ? a : b, older = newer === a ? b : a;
   var o = blank();
-  o.name = newer.name || older.name; o.start = newer.start || older.start;
+  o.name = newer.name || older.name; o.start = newer.start || older.start; if ((a.statTs||0) >= (b.statTs||0)) { o.statDate = a.statDate || ""; o.statTs = a.statTs || 0; } else { o.statDate = b.statDate || ""; o.statTs = b.statTs || 0; }
   o.updated = Math.max(a.updated || 0, b.updated || 0);
   [older.del, newer.del].forEach(function(d){ Object.keys(d || {}).forEach(function(k){ o.del[k] = Math.max(o.del[k] || 0, d[k]); }); });
   [older.done, newer.done].forEach(function(d){ Object.keys(d || {}).forEach(function(k){ if (d[k]) o.done[k] = true; }); });
@@ -1087,6 +1090,114 @@ function wireSync(){
   };
 }
 
+/* ---------- whole-course schedule + STAT date ---------- */
+// Cell markup: [[target|text]] where target is a lesson id, lessonid#quizid, or a #/ route.
+var DAILY1 = "[[s2l1|Active reading]] 20–30 min + [[s2l2|vocabulary cards]] 10 min";
+var SCHED = [
+ {w:1, ph:"Phase 1: Foundations", mon:"[[s1l1|Number sense, rounding and estimation]]", tue:"[[s2l3|Full sentences]]", wed:"[[s1l1|Lesson 1]] continued", thu:"[[s1l1#s1l1a|Lesson 1 practice]]", sat:"<b>Diagnostic:</b> ACER sample questions ([[s3l7#s3acer|verbal sheet]], [[s4l7#s4acer|quant sheet]]) + one 30-min essay in the [[#/essays|Essay studio]]"},
+ {w:2, mon:"[[s1l2|The four operations by hand]]", tue:"[[s2l3|Full sentences]] + [[s2l3#s2l3a|sentence practice]]", wed:"[[s1l2|Lesson 2]] continued", thu:"[[s1l2#s1l2a|Lesson 2 practice]]", sat:"Weekly review + [[#/errors|error log]]"},
+ {w:3, mon:"[[s1l3|Fractions]]", tue:"[[s2l4|Punctuation]]", wed:"[[s1l3|Lesson 3]] continued", thu:"[[s1l3#s1l3a|Lesson 3 practice]]", sat:"Weekly review + [[#/errors|error log]]"},
+ {w:4, mon:"[[s1l4|Decimals and percentages]]", tue:"[[s2l4|Punctuation]] + [[s2l4#s2l4a|punctuation practice]]", wed:"[[s1l4|Lesson 4]] continued", thu:"[[s1l4#s1l4a|Lesson 4 practice]]", sat:"Weekly review + [[#/errors|error log]]"},
+ {w:5, mon:"[[s1l5|Ratio, rate, proportion and units]]", tue:"[[s2l5|Joining ideas]]; read [[s5l1|What the markers reward]]", wed:"[[s1l5|Lesson 5]] continued", thu:"[[s1l5#s1l5a|Lesson 5 practice]]", sat:"Weekly review + [[#/errors|error log]]"},
+ {w:6, mon:"[[s1l6|Algebra basics]]", tue:"[[s2l5|Joining ideas]] + [[s2l5#s2l5a|joining practice]]", wed:"[[s1l6|Lesson 6]] continued", thu:"[[s1l6#s1l6a|Lesson 6 practice]]", sat:"Weekly review + [[#/errors|error log]]"},
+ {w:7, mon:"[[s1l7|Graphs and tables]]", tue:"[[s2l6|The paragraph]]", wed:"[[s1l7|Lesson 7]] continued", thu:"[[s1l7#s1l7a|Lesson 7 practice]]", sat:"Weekly review + [[#/errors|error log]]"},
+ {w:8, mon:"[[s1l8|Shape, averages and probability]]", tue:"[[s2l6|The paragraph]]: 150-word paragraph (benchmark)", wed:"[[s1l8#s1l8a|Lesson 8 practice]]", thu:"Main-idea summary of a 700-word article (benchmark)", sat:"<b>Benchmark:</b> [[s1l8#s1quiz|Phase 1 quiz]] (45 min)"},
+ {w:9, ph:"Phase 2: STAT skills", mon:"[[s4l1|Reading data displays]]", tue:"[[s3l1|Main idea and purpose]]", wed:"[[s4l1#s4l1a|Practice: commuting data]]", thu:"[[s5l2|The Part A argument essay]]", sat:"[[s3l1#s3l1a|Questions on Extract A]] + review"},
+ {w:10, mon:"[[s4l2|Percentages and rates in context]]", tue:"[[s3l2|Words in context and tone]]", wed:"[[s4l2#s4l2a|Practice: percentages and rates]]", thu:"Part A essay ([[s5l2|Lesson 2]]) in the [[#/essays|Essay studio]]", sat:"[[s3l2#s3l2a|Questions on Extract B]] + review"},
+ {w:11, mon:"[[s4l3|Patterns and sequences]]", tue:"[[s3l3|Paraphrase]]", wed:"[[s4l3#s4l3a|Practice: patterns]]", thu:"[[s5l3|Part A tools]]", sat:"[[s3l3#s3l3a|Paraphrase practice]] + review"},
+ {w:12, mon:"[[s4l4|Formulas and invented symbols]]", tue:"[[s3l4|Inference]]", wed:"[[s4l4#s4l4a|Practice: formulas]]", thu:"<b>Benchmark:</b> untimed Part A essay in the [[#/essays|Essay studio]]", sat:"[[s3l4#s3l4a|Questions on Extract C]] + review"},
+ {w:13, mon:"[[s4l5|Spatial reasoning]]", tue:"[[s3l5|Arguments and assumptions]]", wed:"[[s4l5#s4l5a|Practice: spatial]]", thu:"[[s5l4|The Part B reflective essay]]", sat:"[[s3l5#s3l5a|Argument practice]] + review"},
+ {w:14, mon:"[[s4l6|Logic puzzles]]", tue:"[[s3l6|Poems, cartoons and dialogues]]", wed:"[[s4l6#s4l6a|Practice: logic]]", thu:"Part B essay ([[s5l4|Lesson 4]]) in the [[#/essays|Essay studio]]", sat:"[[s3l6#s3l6a|Poem, cartoon and dialogue questions]] + review"},
+ {w:15, mon:"[[s4l7#s4l7a|The café menu]], untimed", tue:"[[s3l7#s3l7a|The speed of notes]], untimed", wed:"[[s4l7#s4acer|ACER quant sheet]], untimed", thu:"[[s5l5|Polishing]] + Part B essay", sat:"[[s3l7#s3acer|ACER verbal sheet]], untimed + [[#/errors|error log]]"},
+ {w:16, mon:"[[s4l7#s4l7a|The café menu]] in Exam mode (12 min)", tue:"[[s3l7#s3l7a|The speed of notes]] in Exam mode (12 min)", wed:"[[s4l7#s4acer|ACER quant sheet]] in Exam mode (25 min)", thu:"Part A or B essay, 30 min", sat:"<b>Benchmark:</b> [[s3l7#s3acer|ACER verbal sheet]] in Exam mode (20 min); aim for 70% on both mixed units"},
+ {w:17, ph:"Phase 3: Speed and stamina", mon:"[[s6l1#s6va|Timed verbal set A]] (18 Qs, 30 min)", tue:"[[#/errors|Error-log]] review + drills", wed:"Part A essay, 30 min ([[s5l6|prompt bank]])", thu:"[[s6l1#s6qa|Timed quant set A]] (18 Qs, 30 min)", sat:"Mixed set, 35 Qs in 60 min + [[s6l2|review]]"},
+ {w:18, star:1, mon:"Light review", tue:"Part B essay, 30 min", wed:"Rest", thu:"Light quant drills", sat:"<b>[[s6l1|Official MC practice test 1]]</b> (full, timed), then [[s6l2|review]]"},
+ {w:19, mon:"[[s6l2|Review test 1]]: redo every miss", tue:"Drills on weakest skill #1", wed:"Essay pair, 60 min", thu:"Drills on weakest skill #2", sat:"[[s6l1|STAT Mentors free test]] (20 Qs, 25 min) + review"},
+ {w:20, mon:"[[s6l1#s6vb|Timed verbal set B]]", tue:"Drills on weakest skill", wed:"Essay pair, 60 min", thu:"[[s6l1#s6qb|Timed quant set B]]", sat:"Mixed set + review"},
+ {w:21, mon:"[[s6l1#s6va|Verbal set A]] again", tue:"[[#/errors|Error-log]] review", wed:"<b>Benchmark:</b> essay pair, 60 min", thu:"[[s6l1#s6qa|Quant set A]] again", sat:"Mixed set + review"},
+ {w:22, ph:"Phase 4: Full rehearsals", star:1, mon:"Light review", tue:"<b>[[s6l1|Official Written English practice test]]</b>", wed:"Rest", thu:"Light drills ([[s6l3|timing drills]])", sat:"<b>[[s6l1|Official MC practice test 2]]</b> (full, timed), then [[s6l2|review]]"},
+ {w:23, mon:"[[s6l2|Review test 2]]", tue:"Weakest-skill drills", wed:"Essay pair at the test time of day", thu:"Rest", sat:"<b>Full mock:</b> MC + essays at the real test times"},
+ {w:24, mon:"Reread [[#/errors|error log]] (30 min)", tue:"Reread best essays in the [[#/essays|Essay studio]] (30 min)", wed:"Light 20-question set", thu:"Rest ([[s6l3|day-before checklist]])", sat:"<b>Test day</b> (or rest if the test is later)"}
+];
+var SCHED_DAYS = [["mon","Mon",0],["tue","Tue",1],["wed","Wed",2],["thu","Thu",3],["sat","Sat",5]];
+
+function cellLinks(s){
+  return s.replace(/\[\[([^|\]]+)\|([^\]]+)\]\]/g, function(_, t, txt){
+    var href = t.charAt(0)==="#" ? t : "#/l/" + t.replace("#", "/");
+    return '<a href="'+href+'">'+txt+'</a>';
+  });
+}
+function ymd(s){ var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||""); return m ? new Date(+m[1], +m[2]-1, +m[3]) : null; }
+function addDays(d,n){ var x=new Date(d.getFullYear(), d.getMonth(), d.getDate()+n); return x; }
+function isoDate(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function fmtD(d, yr){ return d.toLocaleDateString("en-AU", yr ? {weekday:"short", day:"numeric", month:"short", year:"numeric"} : {day:"numeric", month:"short"}); }
+// Monday of week n of the plan, counting back from the STAT date (test falls in week 24)
+function weekMonday(n){
+  var t=ymd(S.statDate); if(!t) return null;
+  var mon24=addDays(t, -((t.getDay()+6)%7));
+  return addDays(mon24, -7*(24-n));
+}
+// Plan week today falls in, by the STAT date (can be <1 or >24)
+function testWeekToday(){
+  var m1=weekMonday(1); if(!m1) return null;
+  var now=ymd(today());
+  return Math.floor((now - m1)/864e5/7)+1;
+}
+function statCard(){
+  var t=ymd(S.statDate), h='<div class="card" id="statcard"><h3 style="margin-top:0">Your STAT date</h3>';
+  h+='<div class="row"><input type="date" id="statd" value="'+esc(S.statDate||"")+'" style="max-width:200px"><button class="btn small" onclick="saveStatDate()">Save</button>'+(t?'<button class="btn ghost small" onclick="clearStatDate()">Clear</button>':'')+'</div>';
+  if(!t){ h+='<p class="small muted" style="margin:8px 0 0">Enter the date you sit the STAT and the schedule will show real dates, counting back from test week (Week 24).</p>'; return h+'</div>'; }
+  var days=Math.round((t - ymd(today()))/864e5), tw=testWeekToday(), m1=weekMonday(1);
+  h+='<p style="margin:10px 0 4px"><b>'+fmtD(t,true)+'</b> · '+(days>0? days+' days to go' : days===0 ? 'today. Good luck!' : 'this date has passed')+'</p>';
+  if(days>0){
+    if(tw<1) h+='<p class="small" style="margin:0">That’s more than 24 weeks away, so Week 1 starts on <b>'+fmtD(m1,true)+'</b>. Until then, daily reading and vocabulary are a great head start.</p>';
+    else h+='<p class="small" style="margin:0">Counting back from your test, you should be in <b>Week '+Math.min(tw,24)+'</b> this week.'+(tw>1?' The plan started on '+fmtD(m1,true)+'.':'')+'</p>';
+    var wn=weekNow();
+    if(S.start && wn!==null && tw>=1 && wn!==Math.min(tw,24)) h+='<p class="small" style="margin:6px 0 0">Your course start date puts you in Week '+wn+'. <button class="linkbtn" onclick="alignStart()">Line it up with your test date</button> (start date becomes '+fmtD(m1,true)+').</p>';
+    else if(!S.start) h+='<p class="small" style="margin:6px 0 0"><button class="linkbtn" onclick="alignStart()">Use '+fmtD(m1,true)+' as your course start date</button> so the dashboard shows the right week.</p>';
+    if(tw>1 && tw<=24) h+='<p class="small muted" style="margin:6px 0 0">Starting late? Keep the order of the weeks but move faster through what you already know. Never skip Phase 3 and 4 practice.</p>';
+  }
+  return h+'</div>';
+}
+function saveStatDate(){ var v=$("statd").value; if(!ymd(v)){ toast("Pick a date first"); return; } S.statDate=v; S.statTs=Date.now(); save(); route(true); toast("STAT date saved"); }
+function clearStatDate(){ S.statDate=""; S.statTs=Date.now(); save(); route(true); }
+function alignStart(){ var m1=weekMonday(1); if(!m1) return; S.start=isoDate(m1); save(); route(true); toast("Course start date updated"); }
+
+function pageSchedule(){
+  var tw=testWeekToday(), wn = tw!==null ? tw : weekNow(), h=topbar()+'<h1>Course schedule</h1><p class="sub">All 24 weeks, day by day. Links take you to the lesson, quiz or tool for that session. Every day: '+cellLinks(DAILY1)+'. Sunday is a rest day.</p>';
+  h+=statCard();
+  h+='<div class="content"><table class="sched"><tr><th>Week</th>'+SCHED_DAYS.map(function(d){return '<th>'+d[1]+'</th>';}).join("")+'</tr>';
+  SCHED.forEach(function(r){
+    var m=weekMonday(r.w);
+    if(r.ph) h+='<tr class="phrow"><td colspan="6">'+r.ph+'</td></tr>';
+    h+='<tr id="wk'+r.w+'"'+(wn===r.w?' class="nowrow"':'')+'><td><b>'+r.w+(r.star?' ★':'')+'</b>'+(m?'<div class="small muted">'+fmtD(m)+'</div>':'')+(wn===r.w?'<div class="small"><b>This week</b></div>':'')+'</td>';
+    SCHED_DAYS.forEach(function(d){
+      var txt=cellLinks(r[d[0]]);
+      if(r.w===24 && d[0]==="sat" && S.statDate) txt='<b>Test day</b>: '+fmtD(ymd(S.statDate),true)+' (rest on the days in between)';
+      h+='<td>'+(m?'<div class="small muted">'+fmtD(addDays(m,d[2]))+'</div>':'')+txt+'</td>';
+    });
+    h+='</tr>';
+  });
+  h+='</table><p class="small muted">★ Weeks with an official ACER practice test. Benchmarks are tracked on the <a href="#/">Dashboard</a>.</p></div>';
+  $("main").innerHTML=h;
+  if(wn>=1 && wn<=24){ var row=$("wk"+wn); if(row && !location.hash.match(/#\/schedule\/top/)) setTimeout(function(){ row.scrollIntoView({block:"center"}); },0); }
+}
+// Adds real dates to the Practice schedule table (lesson s6l1)
+function datePracticeTable(){
+  var rc=document.querySelector("#main .rescard"); if(!rc) return;
+  rc.insertAdjacentHTML("afterend", statCard());
+  if(!S.statDate) return;
+  var tb=rc.parentNode.querySelector("table"); if(!tb) return;
+  Array.prototype.forEach.call(tb.querySelectorAll("tr"), function(tr){
+    var c=tr.children, m=/^(\d+)/.exec((c[0]&&c[0].textContent||"").trim());
+    if(!m || c.length<6) return;
+    var mon=weekMonday(+m[1]); if(!mon) return;
+    c[0].insertAdjacentHTML("beforeend",'<div class="small muted">'+fmtD(mon)+'</div>');
+    [0,1,2,3,5].forEach(function(off,k){ c[k+1].insertAdjacentHTML("afterbegin",'<div class="small muted">'+fmtD(addDays(mon,off))+'</div>'); });
+    if(+m[1]===24) c[5].innerHTML='<div class="small muted">'+fmtD(addDays(mon,5))+'</div><b>Test day</b>: '+fmtD(ymd(S.statDate),true)+' (rest on the days in between)';
+  });
+}
+
 /* ---------- router ---------- */
 var cur={page:"dash"};
 function route(keepScroll){
@@ -1095,6 +1206,7 @@ function route(keepScroll){
   if(EXAM && !(p[0]==="l" && p[1]===EXAM.lid)){ if(!confirm("Leave the timed attempt? It won't be saved.")){ location.hash="#/l/"+EXAM.lid; return; } clearInterval(EXAM.timer); EXAM=null; }
   if(p[0]==="l" && LESSON[p[1]]){ cur={page:"lesson",lid:p[1]}; pageLesson(p[1]); }
   else if(p[0]==="guide"){ cur={page:"guide"}; pageGuide(); }
+  else if(p[0]==="schedule"){ cur={page:"schedule"}; pageSchedule(); }
   else if(p[0]==="account"){ cur={page:"account"}; pageAccount(); }
   else if(p[0]==="settings"){ cur={page:"settings"}; pageSettings(); }
   else if(p[0]==="errors"){ cur={page:"errors"}; pageErrors(); }
@@ -1103,6 +1215,7 @@ function route(keepScroll){
   else { cur={page:"dash"}; pageDash(); }
   renderSide(cur); toggleSide(false);
   if(!keepScroll) window.scrollTo(0,0);
+  if(p[0]==="l" && p[2]){ var qe=$("qz_"+p[2]); if(qe) setTimeout(function(){ qe.scrollIntoView(); },0); }
 }
 window.addEventListener("hashchange",function(){ route(); });
 window.addEventListener("beforeunload",function(e){ if(EXAM||ES){ e.preventDefault(); e.returnValue=""; } });
