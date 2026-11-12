@@ -142,6 +142,7 @@ details.vd>summary .vdt{flex:1}.vdw{display:none;color:var(--good,#0f766e);font-
 details.vd .vframe{margin-bottom:6px}.vlink{font-size:.85rem;margin:0 0 10px}
 details summary::-webkit-details-marker{display:none}
 .books ul{margin:6px 0 4px 18px}.books li{margin:5px 0}
+.errai{background:#eef2fb;border-radius:6px;padding:6px 10px}
 </style>
 </head>
 <body>
@@ -898,7 +899,9 @@ function wire(box,lid,q,exam){
     if(v.length<2){ toast("Write your answer first"); return; }
     b.disabled=true; b.textContent="Checking…";
     aiCall({kind:"short", question:strip(it.q), model:strip(it.m), answer:v, context:(stimFor(q,i)||strip(LESSON[lid].html)).slice(0,10000)}).then(function(r){
-      var a=S.ans[id]||{ok:null}; a.v=inp.value; a.ai={fb:r.feedback||"", verdict:r.verdict||"", v:inp.value, ts:Date.now()}; a.shown=true; a.ts=Date.now(); S.ans[id]=a; save(); renderQuiz(lid,q);
+      var a=S.ans[id]||{ok:null}; a.v=inp.value; a.ai={fb:r.feedback||"", verdict:r.verdict||"", v:inp.value, ts:Date.now()}; a.shown=true; a.ts=Date.now(); S.ans[id]=a;
+      S.errors.forEach(function(e){ if(e.id===id){ e.ai=a.ai.fb; e.ts=Date.now(); } });
+      save(); renderQuiz(lid,q); renderSide(cur);
     }).catch(function(err){ toast(err.message); b.disabled=false; b.textContent="Get AI feedback"; });
   }; });
   Array.prototype.forEach.call(box.querySelectorAll("[data-show]"),function(b){ b.onclick=function(){ var i=+b.dataset.show,id=qid(q,i),inp=box.querySelector("#i_"+cssId(id)); var pa=S.ans[id]&&S.ans[id].ai; S.ans[id]={v:inp?inp.value:"",ok:null,shown:true,ts:Date.now()}; if(pa) S.ans[id].ai=pa; save(); renderQuiz(lid,q); }; });
@@ -927,6 +930,7 @@ function logError(lid,q,i,v){
   var id=qid(q,i), it=q.items[i];
   S.errors=S.errors.filter(function(e){ return !(e.id===id && e.date===today()); });
   S.errors.push({id:id,date:today(),lid:lid,quiz:q.title,skill:LESSON[lid].skill,q:strip(it.q).slice(0,400),your:yourText(it,v),right:rightText(it),note:"",ts:Date.now()});
+  var an=S.ans[id]; if(an&&an.ai&&an.ai.fb) S.errors[S.errors.length-1].ai=an.ai.fb;
 }
 function resetQuiz(lid,qzId){ var q=quizzes(lid).filter(function(x){return x.id===qzId;})[0]; if(!confirm("Clear your answers for “"+q.title+"” and try again? Your past score and error log stay.")) return; q.items.forEach(function(_,i){ var k=qid(q,i); delete S.ans[k]; S.del["ans:"+k]=Date.now(); }); save(); renderQuiz(lid,q); }
 function startExam(lid,qzId){
@@ -955,7 +959,8 @@ function submitExam(auto){
 function errWhy(e){
   var it=ITEM[e.id]; if(!it) return "";
   if(it.e) return '<p class="small" style="margin:4px 0"><b>Why:</b> '+esc(it.e)+'</p>';
-  if(it.t==="self"){ var a=S.ans[e.id]; return '<p class="small" style="margin:4px 0">'+(a&&a.ai?'<b>AI feedback:</b> '+esc(a.ai.fb):'Open the quiz to compare with the model answer'+(aiReady()?' or get AI feedback':'')+'.')+'</p>'; }
+  if(it.t==="self"){ var a=S.ans[e.id], fb=e.ai||(a&&a.ai&&a.ai.fb);
+    return fb ? '<p class="small errai" style="margin:4px 0"><b>AI feedback:</b> '+esc(fb)+'</p>' : '<p class="small" style="margin:4px 0">Open the quiz to compare with the model answer'+(aiReady()?' or get AI feedback':'')+'.</p>'; }
   return "";
 }
 function pageErrors(){
