@@ -66,7 +66,7 @@ details.answers summary{cursor:pointer;font-weight:600;color:var(--accent)}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .pill{display:inline-block;font-size:12.5px;padding:2px 9px;border-radius:20px;background:var(--accent-soft);color:var(--accent);font-weight:600}
 .pill.grey{background:#eeede8;color:var(--muted)}
-input[type=text],input[type=email],input[type=date],input[type=number],textarea,select{font:inherit;border:1.5px solid #cfd3d1;border-radius:8px;padding:8px 10px;background:#fff;color:var(--ink);width:100%}
+input[type=text],input[type=email],input[type=password],input[type=date],input[type=number],textarea,select{font:inherit;border:1.5px solid #cfd3d1;border-radius:8px;padding:8px 10px;background:#fff;color:var(--ink);width:100%}
 input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
 /* quiz */
 .quiz{margin-top:30px;border-top:3px solid var(--accent);padding-top:6px}
@@ -609,6 +609,7 @@ function pageDash(){
     h += '<div class="card"><h3 style="margin-top:0">Set up</h3><div class="grid"><label>Your first name<input type="text" id="nm" value="'+esc(S.name)+'"></label><label>Course start date<input type="date" id="sd" value="'+esc(S.start)+'"></label></div><div class="row" style="margin-top:12px"><button class="btn" onclick="saveSetup()">Save</button><span class="small muted">The start date lets the dashboard show which week you’re in. You can change these later in Settings.</span></div></div>';
   }
   if(SY.on && !SY.user) h += '<div class="card" style="padding:12px 16px"><span class="small">Using more than one computer? <a href="#/account">Sign in</a> to keep your progress in sync.</span></div>';
+  if(SY.on && SY.user && !hasPw()) h += '<div class="card" style="padding:12px 16px"><span class="small"><b>Set a password</b> so you can sign in without waiting for an email next time. <a href="#/account">Set it now</a></span></div>';
   h += '<div class="grid">'
     + '<div class="stat"><b>'+(w?'Week '+w:'—')+'</b><span>'+(w?phaseOf(w)[1]:'Set a start date')+'</span></div>'
     + '<div class="stat"><b>'+done+' / '+ORDER.length+'</b><span>lessons complete</span><div class="bar" style="margin-top:8px"><i style="width:'+Math.round(done/ORDER.length*100)+'%"></i></div></div>'
@@ -652,7 +653,7 @@ function pageAccount(){
   var h=topbar()+'<h1>'+(SY.user?'Account':'Sign in')+'</h1><p class="sub">'+(SY.user?'You’re signed in, so your progress syncs to every computer where you sign in with this email.':'Sign in to keep your progress in sync between computers. Only you can see your progress.')+'</p>';
   if(!SY.on) h+='<div class="card">Syncing isn’t set up for this copy of the course, so progress saves in this browser only. Use Settings to back it up.</div>';
   else h+=syncCard();
-  if(SY.on && !SY.user) h+='<div class="card small"><b>How it works</b><ol style="margin:6px 0 0;padding-left:20px"><li>Enter your email and click <b>Email me a sign-in link</b>.</li><li>Open the email <b>on this computer</b> and click <b>Sign in</b>.</li><li>You’re brought back here, signed in. Do this once on each computer you use.</li></ol></div>';
+  if(SY.on && !SY.user) h+='<div class="card small"><b>First time?</b><ol style="margin:6px 0 0;padding-left:20px"><li>Click <b>Sign in with an emailed link</b>, enter your email, and open the email <b>on this computer</b>.</li><li>Click <b>Sign in</b> in the email. You’re brought back here, signed in.</li><li>Set a password. After that, sign in on any computer with your email and password.</li></ol><p style="margin:8px 0 0">You stay signed in on each computer until you sign out.</p></div>';
   $("main").innerHTML=h; wireSync();
 }
 function pageSettings(){
@@ -876,6 +877,15 @@ function delEssay(id){ if(!confirm("Delete this essay permanently?")) return; S.
 var SY = {on:false, client:null, user:null, status:"local", msg:"", pending:null, timer:null, busy:false, again:false, step:"email", email:"", last:0};
 var META_KEY = "stat-sync-meta", META = {base:""};
 try { META = Object.assign(META, JSON.parse(localStorage.getItem(META_KEY) || "{}")); } catch(e){}
+function sameTime(a, b){ return !!a && !!b && Date.parse(a) === Date.parse(b); }
+function canon(o){ return JSON.stringify(o, function(k, v){ return v && typeof v === "object" && !Array.isArray(v) ? Object.keys(v).sort().reduce(function(r, x){ r[x] = v[x]; return r; }, {}) : v; }); }
+function typing(){ var a = document.activeElement; return !!a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && !!a.closest && !!a.closest("main"); }
+function safeRender(){
+  if (EXAM || ES || cur.page === "essays") { SY.needRender = true; return; }
+  if (typing()) { SY.needRender = true; return; }
+  SY.needRender = false; route(true);
+}
+document.addEventListener("focusout", function(){ setTimeout(function(){ if (SY.needRender && !typing() && !EXAM && !ES && cur.page !== "essays") { SY.needRender = false; route(true); } }, 50); });
 function saveMeta(){ try { localStorage.setItem(META_KEY, JSON.stringify(META)); } catch(e){} }
 
 function mergeState(a, b){
@@ -917,6 +927,7 @@ function syncInit(){
     var u = session && session.user || null, was = SY.user && SY.user.id;
     SY.user = u;
     if (u && was !== u.id) {
+      SY.step = "email";
       if (/access_token=|[?&]code=/.test(location.search + location.hash)) { history.replaceState(null, "", location.pathname + "#/account"); route(); toast("Signed in. Syncing your progress…"); }
       setTimeout(syncNow, 0);
     }
@@ -934,18 +945,18 @@ function pull(){
   if (!SY.user) return Promise.resolve();
   return SY.client.from("progress").select("updated_at,data").eq("user_id", SY.user.id).maybeSingle().then(function(r){
     if (r.error) throw r.error;
-    if (r.data && r.data.updated_at !== META.base) {
+    if (r.data && !sameTime(r.data.updated_at, META.base)) {
       if (EXAM || ES || cur.page === "essays") SY.pending = r.data; else applyRemote(r.data);
     }
     if (SY.status !== "pending" && SY.status !== "saving") setStatus("synced");
   }).catch(function(e){ setStatus(navigator.onLine ? "error" : "offline", e && e.message); });
 }
 function applyRemote(row){
-  var before = JSON.stringify(row.data || {});
-  S = mergeState(S, row.data || {});
-  META.base = row.updated_at; saveMeta(); persist();
-  if (JSON.stringify(S) !== before) schedulePush();
-  route(true);
+  var local = canon(S), remote = canon(row.data || {});
+  var merged = mergeState(S, row.data || {}), m = canon(merged);
+  S = merged; META.base = row.updated_at; saveMeta(); persist();
+  if (m !== remote) schedulePush();
+  if (m !== local) safeRender();
 }
 function push(){
   if (!SY.user) return Promise.resolve();
@@ -954,12 +965,12 @@ function push(){
   var uid = SY.user.id;
   return SY.client.from("progress").select("updated_at,data").eq("user_id", uid).maybeSingle().then(function(r){
     if (r.error) throw r.error;
-    if (r.data && r.data.updated_at !== META.base) { S = mergeState(S, r.data.data); persist(); SY.mergedRemote = true; }
+    if (r.data && !sameTime(r.data.updated_at, META.base)) { var b4 = canon(S); S = mergeState(S, r.data.data); persist(); if (canon(S) !== b4) SY.mergedRemote = true; }
     var now = new Date().toISOString();
     return SY.client.from("progress").upsert({user_id: uid, data: S, updated_at: now}).then(function(w){
       if (w.error) throw w.error;
       META.base = now; saveMeta(); SY.last = Date.now(); setStatus("synced");
-      if (SY.mergedRemote) { SY.mergedRemote = false; if (!EXAM && !ES && cur.page !== "essays") route(true); }
+      if (SY.mergedRemote) { SY.mergedRemote = false; safeRender(); }
     });
   }).catch(function(e){ setStatus(navigator.onLine ? "error" : "offline", e && e.message); })
   .then(function(){ SY.busy = false; if (SY.again) { SY.again = false; push(); } });
@@ -982,11 +993,20 @@ function refreshSyncUI(){
   var c = $("synccard"); if (c) { c.innerHTML = syncInner(); wireSync(); }
 }
 function syncCard(){ return SY.on ? '<div class="card" id="synccard">' + syncInner() + '</div>' : ''; }
+function hasPw(){ return !!(SY.user && SY.user.user_metadata && SY.user.user_metadata.has_password); }
 function syncInner(){
-  var h = '<h3 style="margin-top:0">' + (SY.user ? 'Sync' : 'Sign in with your email') + '</h3>';
-  if (SY.user) return h + '<p class="small">Signed in as <b>' + esc(SY.user.email) + '</b>. Your progress syncs automatically to any computer where you sign in with this email.</p><p class="small muted">' + statusText() + '</p><div class="row"><button class="btn small ghost" id="syncnow">Sync now</button><button class="btn small danger" id="signout">Sign out on this computer</button></div>';
-  if (SY.step === "code") return h + '<p class="small">We emailed a sign-in link to <b>' + esc(SY.email) + '</b>. Open that email <b>on this computer</b> and click <b>Sign in</b>. It brings you straight back here, signed in. You can close this tab.</p><p class="small"><button class="linkbtn" id="sresend">Send a new link</button> · <button class="linkbtn" id="sback">Use a different email</button></p><p class="small" id="smsg"></p>';
-  return h + '<div class="numrow"><input type="email" id="semail" autocomplete="email" placeholder="you@example.com" value="' + esc(SY.email) + '"><button class="btn small" id="ssend">Email me a sign-in link</button></div><p class="small" id="smsg"></p>';
+  var h;
+  if (SY.user) {
+    h = '<h3 style="margin-top:0">Sync</h3><p class="small">Signed in as <b>' + esc(SY.user.email) + '</b>. Your progress syncs automatically to any computer where you sign in with this email. You stay signed in on this computer until you sign out.</p><p class="small muted">' + statusText() + '</p><div class="row"><button class="btn small ghost" id="syncnow">Sync now</button><button class="btn small danger" id="signout">Sign out on this computer</button></div>';
+    h += '<div class="sep" style="margin:18px 0"></div><h3 style="margin-top:0">' + (hasPw() ? 'Change your password' : 'Set a password') + '</h3>';
+    if (!hasPw()) h += '<p class="small">Set a password so next time you can sign in with your email and password instead of waiting for an email.</p>';
+    h += '<form id="pwform" autocomplete="on"><input type="email" autocomplete="username" value="' + esc(SY.user.email) + '" style="display:none" readonly><div class="grid"><label class="small">New password (at least 8 characters)<input type="password" id="pw1" autocomplete="new-password"></label><label class="small">Type it again<input type="password" id="pw2" autocomplete="new-password"></label></div><div class="row" style="margin-top:10px"><button class="btn small" type="submit">' + (hasPw() ? 'Change password' : 'Save password') + '</button></div></form><p class="small" id="smsg"></p>';
+    return h;
+  }
+  h = '<h3 style="margin-top:0">' + (SY.step === "email" ? 'Email and password' : 'Sign in with an emailed link') + '</h3>';
+  if (SY.step === "code") return h + '<p class="small">We emailed a sign-in link to <b>' + esc(SY.email) + '</b>. Open that email <b>on this computer</b> and click <b>Sign in</b>. It brings you straight back here, signed in. You can close this tab.</p><p class="small"><button class="linkbtn" id="sresend">Send a new link</button> · <button class="linkbtn" id="spwmode">Sign in with a password instead</button></p><p class="small" id="smsg"></p>';
+  if (SY.step === "link") return h + '<p class="small">First time here, or forgotten your password? We’ll email you a link to sign in. Once you’re in, you can set a new password.</p><div class="numrow"><input type="email" id="semail" autocomplete="email" placeholder="you@example.com" value="' + esc(SY.email) + '"><button class="btn small" id="ssend">Email me a sign-in link</button></div><p class="small" style="margin-top:8px"><button class="linkbtn" id="spwmode">Sign in with a password instead</button></p><p class="small" id="smsg"></p>';
+  return h + '<form id="loginform" autocomplete="on"><div class="grid"><label class="small">Email<input type="email" id="semail" autocomplete="username" placeholder="you@example.com" value="' + esc(SY.email) + '"></label><label class="small">Password<input type="password" id="spw" autocomplete="current-password"></label></div><div class="row" style="margin-top:10px"><button class="btn" type="submit">Sign in</button></div></form><p class="small" style="margin-top:10px"><button class="linkbtn" id="slink">First time here, or forgotten your password? Sign in with an emailed link</button></p><p class="small" id="smsg"></p>';
 }
 function smsg(t, bad){ var m = $("smsg"); if (m) { m.textContent = t; m.style.color = bad ? "var(--bad)" : "var(--muted)"; } }
 function sendCode(){
@@ -1003,6 +1023,32 @@ function sendCode(){
 function wireSync(){
   if (!SY.on) return;
   var b;
+  var lf = $("loginform");
+  if (lf) lf.onsubmit = function(ev){
+    ev.preventDefault();
+    var em = $("semail").value.trim(), pw = $("spw").value;
+    if (!/^\S+@\S+\.\S+$/.test(em) || !pw) { smsg("Enter your email and password.", true); return; }
+    SY.email = em; smsg("Signing in…");
+    SY.client.auth.signInWithPassword({email: em, password: pw}).then(function(r){
+      if (r.error) { smsg(/invalid/i.test(r.error.message) ? "Email or password is incorrect. If you haven’t set a password yet, sign in with an emailed link first." : "Couldn’t sign in: " + r.error.message, true); return; }
+      toast("Signed in. Syncing your progress…");
+    });
+  };
+  if ((b = $("slink"))) b.onclick = function(){ var e = $("semail"); if (e) SY.email = e.value.trim(); SY.step = "link"; refreshSyncUI(); };
+  if ((b = $("spwmode"))) b.onclick = function(){ var e = $("semail"); if (e) SY.email = e.value.trim(); SY.step = "email"; refreshSyncUI(); };
+  var pf = $("pwform");
+  if (pf) pf.onsubmit = function(ev){
+    ev.preventDefault();
+    var p1 = $("pw1").value, p2 = $("pw2").value;
+    if (p1.length < 8) { smsg("Use at least 8 characters.", true); return; }
+    if (p1 !== p2) { smsg("The two passwords don’t match.", true); return; }
+    smsg("Saving…");
+    SY.client.auth.updateUser({password: p1, data: {has_password: true}}).then(function(r){
+      if (r.error) { smsg(/same|different/i.test(r.error.message) ? "That’s your current password. Choose a new one." : "Couldn’t save the password: " + r.error.message, true); return; }
+      if (r.data && r.data.user) SY.user = r.data.user;
+      refreshSyncUI(); toast("Password saved. Next time, sign in with your email and password.");
+    });
+  };
   if ((b = $("ssend"))) { b.onclick = sendCode; $("semail").onkeydown = function(e){ if (e.key === "Enter") sendCode(); }; }
   if ((b = $("sresend"))) b.onclick = sendCode;
   if ((b = $("sback"))) b.onclick = function(){ SY.step = "email"; refreshSyncUI(); };
