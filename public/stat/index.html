@@ -584,6 +584,7 @@ function renderSide(active){
     sc.lessons.forEach(function(l){ h+='<a href="#/l/'+l.id+'" class="'+(active.lid===l.id?'on':'')+'"><span class="tick'+(S.done[l.id]?' done':'')+'">'+(S.done[l.id]?'✓':'')+'</span>'+esc(lessonShort(l))+'</a>'; });
     h += '</div></div>';
   });
+  h += '<div class="sep"></div>'+(SY.on?link("#/account",SY.user?"Account":"Sign in",active.page==="account"):'')+link("#/settings","Settings",active.page==="settings");
   h += '</nav><div class="sep"></div><div class="small muted" style="padding:0 8px" id="syncline">'+syncLine()+'</div>';
   $("side").innerHTML = h;
   Array.prototype.forEach.call(document.querySelectorAll("[data-grp]"),function(b){ b.onclick=function(){ b.parentNode.classList.toggle("open"); }; });
@@ -605,8 +606,9 @@ function pageDash(){
   var w=weekNow(), done=ORDER.filter(function(id){return S.done[id];}).length, st=stats();
   var h = topbar()+'<h1>'+(S.name?'Hi '+esc(S.name)+'!':'Welcome')+'</h1><p class="sub">Your 24-week path to the STAT. Everything you do here is saved in this browser.</p>';
   if(!S.start||!S.name){
-    h += '<div class="card"><h3 style="margin-top:0">Set up</h3><div class="grid"><label>Your first name<input type="text" id="nm" value="'+esc(S.name)+'"></label><label>Course start date<input type="date" id="sd" value="'+esc(S.start)+'"></label></div><div class="row" style="margin-top:12px"><button class="btn" onclick="saveSetup()">Save</button><span class="small muted">The start date lets the dashboard show which week you’re in.</span></div></div>';
+    h += '<div class="card"><h3 style="margin-top:0">Set up</h3><div class="grid"><label>Your first name<input type="text" id="nm" value="'+esc(S.name)+'"></label><label>Course start date<input type="date" id="sd" value="'+esc(S.start)+'"></label></div><div class="row" style="margin-top:12px"><button class="btn" onclick="saveSetup()">Save</button><span class="small muted">The start date lets the dashboard show which week you’re in. You can change these later in Settings.</span></div></div>';
   }
+  if(SY.on && !SY.user) h += '<div class="card" style="padding:12px 16px"><span class="small">Using more than one computer? <a href="#/account">Sign in</a> to keep your progress in sync.</span></div>';
   h += '<div class="grid">'
     + '<div class="stat"><b>'+(w?'Week '+w:'—')+'</b><span>'+(w?phaseOf(w)[1]:'Set a start date')+'</span></div>'
     + '<div class="stat"><b>'+done+' / '+ORDER.length+'</b><span>lessons complete</span><div class="bar" style="margin-top:8px"><i style="width:'+Math.round(done/ORDER.length*100)+'%"></i></div></div>'
@@ -637,19 +639,29 @@ function pageDash(){
   }
   // benchmarks
   h += '<div class="card"><h3 style="margin-top:0">Benchmarks</h3><p class="small muted">Fill in a result at each checkpoint. Missed one? Repeat the weakest week before moving on.</p><table><tr><th>Week</th><th>Checkpoint</th><th>Target</th><th style="width:28%">Result</th></tr>'+BENCH.map(function(b){ return '<tr><td>'+b[1]+'</td><td>'+esc(b[2])+'</td><td>'+esc(b[3])+'</td><td><input type="text" data-bench="'+b[0]+'" value="'+esc(S.bench[b[0]]||"")+'" placeholder="e.g. 26/30"></td></tr>'; }).join("")+'</table></div>';
-  h += syncCard();
-  // backup
-  h += '<div class="card"><h3 style="margin-top:0">Back up your progress</h3><p class="small">'+(SY.user?'Your progress syncs online, but a backup file is still a good safety net. Download one every few weeks.':'Download a backup every week or so. If you change computers or clear your browser, restore it here.')+'</p><div class="row"><button class="btn" onclick="backup()">Download backup</button><label class="btn ghost">Restore from backup<input type="file" accept=".json,application/json" style="display:none" onchange="restore(this)"></label><button class="btn danger small" onclick="resetAll()">Reset everything</button></div>'+(S.name&&S.start?'<p class="small muted" style="margin-top:10px">Name: '+esc(S.name)+' · Started: '+fmtDate(S.start)+' · <button class="linkbtn" onclick="S.start=\'\';save();route()">change</button></p>':'')+'</div>';
   $("main").innerHTML = h;
-  wireSync();
   Array.prototype.forEach.call(document.querySelectorAll("[data-bench]"),function(i){ i.oninput=function(){ S.bench[i.dataset.bench]=i.value; save(); }; });
   Array.prototype.forEach.call(document.querySelectorAll("[data-wk]"),function(c){ c.onchange=function(){ var k="w"+c.dataset.wk; S.checks[k]=S.checks[k]||{}; S.checks[k][c.dataset.i]=c.checked; save(); }; });
 }
-function saveSetup(){ S.name=$("nm").value.trim(); S.start=$("sd").value; save(); route(); toast("Saved"); }
+function saveSetup(stay){ S.name=$("nm").value.trim(); S.start=$("sd").value; save(); if(!stay) route(); else renderSide(cur); toast("Saved"); }
 function backup(){ var b=new Blob([JSON.stringify(S,null,1)],{type:"application/json"}); var a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="stat-progress-"+today()+".json"; document.body.appendChild(a); a.click(); a.remove(); toast("Backup downloaded"); }
 function restore(inp){ var f=inp.files[0]; if(!f) return; var r=new FileReader(); r.onload=function(){ try{ var d=JSON.parse(r.result); if(!d||typeof d!=="object"||!("ans" in d)) throw 0; S=Object.assign(blank(),d); S.del=Object.assign({},S.del,{reset:Date.now()}); save(); route(); toast("Progress restored"+(SY.user?" and syncing":"")); }catch(e){ alert("That file isn't a STAT course backup."); } }; r.readAsText(f); }
 function resetAll(){ if(confirm("Delete ALL progress, results, essays and notes"+(SY.user?", including the synced copy your other computer uses":" in this browser")+"? Download a backup first if unsure.")){ S=blank(); S.del={reset:Date.now()}; save(); route(); } }
 
+function pageAccount(){
+  var h=topbar()+'<h1>'+(SY.user?'Account':'Sign in')+'</h1><p class="sub">'+(SY.user?'You’re signed in, so your progress syncs to every computer where you sign in with this email.':'Sign in to keep your progress in sync between computers. Only you can see your progress.')+'</p>';
+  if(!SY.on) h+='<div class="card">Syncing isn’t set up for this copy of the course, so progress saves in this browser only. Use Settings to back it up.</div>';
+  else h+=syncCard();
+  if(SY.on && !SY.user) h+='<div class="card small"><b>How it works</b><ol style="margin:6px 0 0;padding-left:20px"><li>Enter your email and click <b>Email me a sign-in link</b>.</li><li>Open the email <b>on this computer</b> and click <b>Sign in</b>.</li><li>You’re brought back here, signed in. Do this once on each computer you use.</li></ol></div>';
+  $("main").innerHTML=h; wireSync();
+}
+function pageSettings(){
+  var h=topbar()+'<h1>Settings</h1>';
+  h+='<div class="card"><h3 style="margin-top:0">Your details</h3><div class="grid"><label>First name<input type="text" id="nm" value="'+esc(S.name)+'"></label><label>Course start date<input type="date" id="sd" value="'+esc(S.start)+'"></label></div><div class="row" style="margin-top:12px"><button class="btn" onclick="saveSetup(true)">Save</button><span class="small muted">The start date sets which week of the course you’re in.</span></div></div>';
+  h+='<div class="card"><h3 style="margin-top:0">Back up your progress</h3><p class="small">'+(SY.user?'Your progress syncs online, but a backup file is still a good safety net. Download one every few weeks.':'Your progress is saved in this browser. Download a backup every week or so. If you change computers or clear your browser, restore it here.')+'</p><div class="row"><button class="btn" onclick="backup()">Download backup</button><label class="btn ghost">Restore from backup<input type="file" accept=".json,application/json" style="display:none" onchange="restore(this)"></label></div></div>';
+  h+='<div class="card"><h3 style="margin-top:0">Start over</h3><p class="small">Delete all progress, results, essays and notes'+(SY.user?', including the synced copy':'')+'. This can’t be undone, so download a backup first.</p><button class="btn danger small" onclick="resetAll()">Reset everything</button></div>';
+  $("main").innerHTML=h;
+}
 function pageGuide(){ $("main").innerHTML = topbar()+'<h1>Course guide</h1><p class="sub">The overall plan: what STAT tests, the target, the timeline and how the course works.</p><div class="content">'+GUIDE+'</div>'; }
 
 function pageLesson(lid){
@@ -905,7 +917,7 @@ function syncInit(){
     var u = session && session.user || null, was = SY.user && SY.user.id;
     SY.user = u;
     if (u && was !== u.id) {
-      if (/access_token=|[?&]code=/.test(location.search + location.hash)) { history.replaceState(null, "", location.pathname + "#/"); route(); }
+      if (/access_token=|[?&]code=/.test(location.search + location.hash)) { history.replaceState(null, "", location.pathname + "#/account"); route(); toast("Signed in. Syncing your progress…"); }
       setTimeout(syncNow, 0);
     }
     if (!u) SY.status = "signedout";
@@ -956,7 +968,7 @@ function push(){
 function syncLine(){
   if (!CAN_SAVE) return '<b style="color:var(--bad)">This browser is blocking saving.</b> Try Chrome, Edge or Firefox.';
   if (!SY.on) return 'Progress saves automatically in this browser. Back up from the Dashboard.';
-  if (!SY.user) return 'Saved on this computer only. <a href="#/">Sign in</a> to sync across computers.';
+  if (!SY.user) return 'Saved on this computer only. <a href="#/account">Sign in</a> to sync across computers.';
   return statusText() + '<br><span class="small">' + esc(SY.user.email || "") + '</span>';
 }
 function statusText(){
@@ -966,15 +978,15 @@ function statusText(){
     signedout: "Not signed in", local: ""}[SY.status] || "";
 }
 function refreshSyncUI(){
-  var l = $("syncline"); if (l) l.innerHTML = syncLine();
+  if ($("side") && typeof cur !== "undefined") renderSide(cur);
   var c = $("synccard"); if (c) { c.innerHTML = syncInner(); wireSync(); }
 }
 function syncCard(){ return SY.on ? '<div class="card" id="synccard">' + syncInner() + '</div>' : ''; }
 function syncInner(){
-  var h = '<h3 style="margin-top:0">Sync across computers</h3>';
+  var h = '<h3 style="margin-top:0">' + (SY.user ? 'Sync' : 'Sign in with your email') + '</h3>';
   if (SY.user) return h + '<p class="small">Signed in as <b>' + esc(SY.user.email) + '</b>. Your progress syncs automatically to any computer where you sign in with this email.</p><p class="small muted">' + statusText() + '</p><div class="row"><button class="btn small ghost" id="syncnow">Sync now</button><button class="btn small danger" id="signout">Sign out on this computer</button></div>';
   if (SY.step === "code") return h + '<p class="small">We emailed a sign-in link to <b>' + esc(SY.email) + '</b>. Open that email <b>on this computer</b> and click <b>Sign in</b>. It brings you straight back here, signed in. You can close this tab.</p><p class="small muted">If your email shows a number code instead, type it here:</p><div class="numrow"><input type="text" id="scode" inputmode="numeric" autocomplete="one-time-code" placeholder="Code from the email"><button class="btn small" id="sverify">Sign in</button></div><p class="small" style="margin-top:8px"><button class="linkbtn" id="sresend">Send a new link</button> · <button class="linkbtn" id="sback">Use a different email</button></p><p class="small" id="smsg"></p>';
-  return h + '<p class="small">Sign in with your email to keep your progress in step on every computer you use. You only need to do this once on each computer. Only you can see your progress.</p><div class="numrow"><input type="email" id="semail" autocomplete="email" placeholder="you@example.com" value="' + esc(SY.email) + '"><button class="btn small" id="ssend">Email me a sign-in link</button></div><p class="small" id="smsg"></p>';
+  return h + '<div class="numrow"><input type="email" id="semail" autocomplete="email" placeholder="you@example.com" value="' + esc(SY.email) + '"><button class="btn small" id="ssend">Email me a sign-in link</button></div><p class="small" id="smsg"></p>';
 }
 function smsg(t, bad){ var m = $("smsg"); if (m) { m.textContent = t; m.style.color = bad ? "var(--bad)" : "var(--muted)"; } }
 function sendCode(){
@@ -1023,6 +1035,8 @@ function route(keepScroll){
   if(EXAM && !(p[0]==="l" && p[1]===EXAM.lid)){ if(!confirm("Leave the timed attempt? It won't be saved.")){ location.hash="#/l/"+EXAM.lid; return; } clearInterval(EXAM.timer); EXAM=null; }
   if(p[0]==="l" && LESSON[p[1]]){ cur={page:"lesson",lid:p[1]}; pageLesson(p[1]); }
   else if(p[0]==="guide"){ cur={page:"guide"}; pageGuide(); }
+  else if(p[0]==="account"){ cur={page:"account"}; pageAccount(); }
+  else if(p[0]==="settings"){ cur={page:"settings"}; pageSettings(); }
   else if(p[0]==="errors"){ cur={page:"errors"}; pageErrors(); }
   else if(p[0]==="essays"){ cur={page:"essays"}; pageEssays(); }
   else if(p[0]==="essay"&&p[1]){ cur={page:"essays"}; pageEssay(p[1]); }
