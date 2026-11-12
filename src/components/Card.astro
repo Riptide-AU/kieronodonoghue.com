@@ -31,7 +31,7 @@ const dateTime = date ? date.toISOString().slice(0, 10) : undefined;
 ---
 
 <article
-  class="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-surface transition-colors hover:border-accent/60 hover:bg-surface-2"
+  class="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/60 hover:bg-surface-2 hover:shadow-lg"
 >
   {
     image && (
@@ -58,7 +58,7 @@ const dateTime = date ? date.toISOString().slice(0, 10) : undefined;
       )
     }
 
-    <h3 class="text-lg font-semibold leading-snug text-ink">
+    <h3 class="font-display text-lg font-semibold leading-snug text-ink transition-colors group-hover:text-accent">
       <a href={href} class="after:absolute after:inset-0">
         {title}
       </a>

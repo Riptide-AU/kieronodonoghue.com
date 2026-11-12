@@ -4,6 +4,9 @@ import SEO from '../components/SEO.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import AnimatedBackground from '../components/AnimatedBackground.astro';
+// Self-hosted variable fonts (no external requests). Inter = body, Sora = display.
+import '@fontsource-variable/inter';
+import '@fontsource-variable/sora';
 import '../styles/global.css';
 
 interface Props {
@@ -42,5 +45,31 @@ const { backgroundTheme = 'default', ...seoProps } = Astro.props;
       <slot />
     </main>
     <Footer />
+
+    <!-- Scroll reveal: adds data-reveal="in" as elements enter the viewport.
+         Fully skipped under reduced motion (elements stay visible via CSS). -->
+    <script is:inline>
+      (() => {
+        const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+        const items = document.querySelectorAll('[data-reveal]');
+        if (!items.length) return;
+        if (reduce.matches || !('IntersectionObserver' in window)) {
+          items.forEach((el) => el.setAttribute('data-reveal', 'in'));
+          return;
+        }
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.setAttribute('data-reveal', 'in');
+                io.unobserve(entry.target);
+              }
+            });
+          },
+          { rootMargin: '0px 0px -10% 0px', threshold: 0.1 },
+        );
+        items.forEach((el) => io.observe(el));
+      })();
+    </script>
   </body>
 </html>
