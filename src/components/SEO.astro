@@ -39,6 +39,7 @@ const ogImage = image ? new URL(image, SITE.url).href : undefined;
 // Person structured data (sameAs links profiles for brand/entity association).
 const sameAs = [
   RIPTIDE.url,
+  RIPTIDE.aboutUrl,
   ...SOCIAL_LINKS.filter((l) => l.href.startsWith('http')).map((l) => l.href),
 ];
 

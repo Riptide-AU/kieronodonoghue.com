@@ -17,7 +17,7 @@ const notes: Record<string, string> = {
 };
 
 const links = [
-  { label: RIPTIDE.name, href: RIPTIDE.url, note: 'My app studio.' },
+  { label: RIPTIDE.name, href: RIPTIDE.aboutUrl, note: 'My app studio.' },
   { label: 'Building', href: '/building/', note: 'What I’m working on now.' },
   { label: 'Writing', href: '/writing/', note: 'Articles, notes and ideas.' },
   { label: 'Books', href: '/books/', note: 'The Soul War Saga.' },
@@ -42,9 +42,11 @@ const links = [
             <h2>
               <a
                 href={link.href}
-                {...(link.href.startsWith('http') && link.href !== RIPTIDE.url
-                  ? { target: '_blank', rel: 'me noopener noreferrer' }
-                  : {})}
+                {...(link.href === RIPTIDE.aboutUrl
+                  ? { rel: 'me' }
+                  : link.href.startsWith('http')
+                    ? { target: '_blank', rel: 'me noopener noreferrer' }
+                    : {})}
               >
                 {link.label}
               </a>

@@ -42,6 +42,12 @@ export const NAV = [
 export const RIPTIDE = {
   name: 'Riptide Digital',
   url: 'https://riptidedigital.com.au',
+  /**
+   * The business site's About page, which names Kieron as the owner and
+   * links back here. Linking to it with rel="me" (footer, About and Links
+   * pages) helps Google see that both sites belong to the same person.
+   */
+  aboutUrl: 'https://riptidedigital.com.au/about/',
   live: true,
 } as const;
 
