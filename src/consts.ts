@@ -9,10 +9,19 @@ export const SITE = {
   url: 'https://kieronodonoghue.com',
   /** Short positioning statement used in metadata and structured data. */
   description:
-    'Kieron O’Donoghue is a Corporate Services Analyst, Business Analytics graduate, and Bachelor of Commerce (Accounting) student based in Australia. He writes about business, technology, systems, analytics, AI, and the projects he is building.',
-  jobTitle: 'Corporate Services Analyst',
+    'Kieron O’Donoghue is a business analyst who builds things: apps, tools and systems that solve practical problems. He runs Riptide Digital, where he is building PainTrail, a pain diary app, and he writes fiction.',
+  jobTitle: 'Business Analyst',
   locale: 'en_AU',
   lang: 'en',
+} as const;
+
+/**
+ * The "Now" line on the home page. Update the date and text together
+ * whenever what you are working on changes.
+ */
+export const NOW = {
+  date: '2026-11-13',
+  text: 'Building PainTrail and setting up Riptide Digital.',
 } as const;
 
 /**

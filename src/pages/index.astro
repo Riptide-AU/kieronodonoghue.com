@@ -2,259 +2,382 @@
 import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import CinematicHero from '../components/CinematicHero.astro';
-import Card from '../components/Card.astro';
-import { SITE, CONTACT_EMAIL, SOCIAL } from '../consts';
+import HeroRain from '../components/HeroRain.astro';
+import PlaceholderCover from '../components/PlaceholderCover.astro';
+import { SITE, NAV, NOW, RIPTIDE } from '../consts';
 
-// Pull content for the homepage shelves. Drafts are excluded everywhere.
-const projects = (await getCollection('projects', (p) => !p.data.draft))
-  .filter((p) => p.data.featured)
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-  .slice(0, 2);
+const formatDate = (d: Date) =>
+  new Intl.DateTimeFormat('en-AU', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(d);
 
+// Where the "What I'm building" button goes: the Building item in the nav.
+const buildingHref = NAV.find((item) => item.label === 'Building')?.href ?? '/';
+
+// The three most recent posts. Drafts are excluded.
 const writing = (await getCollection('writing', (p) => !p.data.draft))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
   .slice(0, 3);
 
-const ideas = (await getCollection('ideas', (p) => !p.data.draft))
-  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
-  .slice(0, 2);
-
-// Surface one book so the site makes clear Kieron is also an author.
-const featuredBook = (await getCollection('books', (b) => !b.data.draft))
-  .filter((b) => b.data.featured)
-  .sort((a, b) => (a.data.bookNumber ?? 0) - (b.data.bookNumber ?? 0))[0];
+// The whole series, in reading order.
+const books = (await getCollection('books', (b) => !b.data.draft)).sort(
+  (a, b) => (a.data.bookNumber ?? 0) - (b.data.bookNumber ?? 0),
+);
+const bookStatus = (status: string) =>
+  status === 'Published' ? 'Out now' : status;
 ---
 
 <BaseLayout
-  titleOverride={`${SITE.name} — Business, technology, analytics & accounting`}
+  titleOverride={`${SITE.name}: a business analyst who builds things`}
   description={SITE.description}
 >
   <!-- HERO -->
-  <CinematicHero />
+  <section class="hero wrap" aria-label="Introduction">
+    <HeroRain />
 
-  <!-- ABOUT THIS SITE + NOW -->
-  <section class="mx-auto max-w-6xl px-5 py-16 md:py-20">
-    <div class="grid gap-5 md:grid-cols-2">
-      <div
-        class="rounded-2xl border border-border bg-surface p-6 shadow-sm md:p-8"
-        data-reveal
-      >
-        <h2 class="eyebrow">About this site</h2>
-        <p class="mt-4 text-base leading-relaxed text-ink-soft">
-          This is the digital home of Kieron O'Donoghue — part project archive,
-          part writing hub, and part knowledge garden. It's a single place to
-          keep the things I've built, the things I'm writing, and the ideas I'm
-          still figuring out. Nothing here needs to be finished to be worth
-          keeping.
-        </p>
-      </div>
+    <h1>Kieron<br />O’Donoghue</h1>
 
-      <div
-        class="rounded-2xl border border-border bg-surface p-6 shadow-sm md:p-8"
-        data-reveal
-        style="--reveal-delay: 90ms"
-      >
-        <div class="flex items-baseline justify-between gap-4">
-          <h2 class="eyebrow">Now</h2>
-          <span class="text-xs text-faint">As of May 2026</span>
-        </div>
-        <p class="mt-4 text-base leading-relaxed text-ink-soft">
-          I'm a Corporate Services Analyst working in the construction industry
-          in Australia, and a Bachelor of Commerce (Accounting) student. Day to
-          day I work with business systems, reporting, and process improvement,
-          and I'm developing my Python, SQL, JavaScript, and CSS through
-          practical work and personal projects.
-        </p>
-      </div>
+    <p class="hero__lede">
+      I’m a business analyst who builds things: apps, tools and systems that
+      solve practical problems.
+    </p>
+
+    <div class="hero__actions">
+      <a class="btn-accent" href={buildingHref}>
+        What I’m building
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+          <path
+            d="M3 8h10M9 4l4 4-4 4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"></path>
+        </svg>
+      </a>
+      {
+        RIPTIDE.live ? (
+          <a class="link-more hero__riptide" href={RIPTIDE.url}>
+            {RIPTIDE.name}
+          </a>
+        ) : (
+          <span class="hero__riptide">
+            {RIPTIDE.name}
+            <span class="hero__soon">site coming soon</span>
+          </span>
+        )
+      }
     </div>
+
+    <p class="hero__now">
+      <span class="hero__now-label">Now</span>
+      <time datetime={NOW.date}>{formatDate(new Date(NOW.date))}</time>
+      <span>{NOW.text}</span>
+    </p>
   </section>
 
-  <!-- FEATURED PROJECTS -->
-  {
-    projects.length > 0 && (
-      <section class="mx-auto max-w-6xl px-5 py-10">
-        <div class="flex items-baseline justify-between gap-4" data-reveal>
-          <h2 class="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl">
-            Featured projects
-          </h2>
-          <a
-            href="/projects/"
-            class="text-sm text-accent transition-colors hover:text-accent-strong"
-          >
-            All projects →
-          </a>
-        </div>
-        <div class="mt-8 grid gap-5 sm:grid-cols-2">
-          {projects.map((p, i) => (
-            <div data-reveal style={`--reveal-delay: ${i * 90}ms`}>
-              <Card
-                title={p.data.title}
-                href={`/projects/${p.id}/`}
-                description={p.data.description}
-                eyebrow={p.data.status}
-                tags={p.data.tools}
-                image={p.data.heroImage}
-                imageAlt={p.data.heroImageAlt}
-              />
-            </div>
-          ))}
-        </div>
-      </section>
-    )
-  }
+  <!-- NOW BUILDING -->
+  <section class="block wrap">
+    <h2>Now building</h2>
+    <ul class="ledger">
+      <li class="entry">
+        <h3>PainTrail</h3>
+        <p class="entry__text">
+          A pain diary app. Quick to fill in, works offline, and keeps your
+          entries on your own phone.
+        </p>
+        <p class="entry__status">
+          <span class="entry__dot" aria-hidden="true"></span>
+          In development, Android first
+        </p>
+      </li>
+      <li class="entry">
+        <h3>{RIPTIDE.name}</h3>
+        <p class="entry__text">
+          My independent app studio. PainTrail is its first app.
+        </p>
+        <p class="entry__status">
+          {
+            RIPTIDE.live ? (
+              <a class="link-more" href={RIPTIDE.url}>
+                riptidedigital.com.au
+              </a>
+            ) : (
+              'Website coming soon'
+            )
+          }
+        </p>
+      </li>
+    </ul>
+  </section>
 
   <!-- RECENT WRITING -->
   {
     writing.length > 0 && (
-      <section class="mx-auto max-w-6xl px-5 py-10">
-        <div class="flex items-baseline justify-between gap-4" data-reveal>
-          <h2 class="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl">
-            Recent writing
-          </h2>
-          <a
-            href="/writing/"
-            class="text-sm text-accent transition-colors hover:text-accent-strong"
-          >
-            All writing →
+      <section class="block wrap">
+        <div class="block__head">
+          <h2>Recent writing</h2>
+          <a class="link-more" href="/writing/">
+            All writing
           </a>
         </div>
-        <div class="mt-8 grid gap-5 sm:grid-cols-3">
-          {writing.map((w, i) => (
-            <div data-reveal style={`--reveal-delay: ${i * 90}ms`}>
-              <Card
-                title={w.data.title}
-                href={`/writing/${w.id}/`}
-                description={w.data.description}
-                eyebrow={w.data.category}
-                date={w.data.pubDate}
-                image={w.data.heroImage}
-                imageAlt={w.data.heroImageAlt}
-              />
-            </div>
+        <ul class="ledger">
+          {writing.map((post) => (
+            <li class="post">
+              <time datetime={post.data.pubDate.toISOString().slice(0, 10)}>
+                {formatDate(post.data.pubDate)}
+              </time>
+              <div>
+                <h3>
+                  <a href={`/writing/${post.id}/`}>{post.data.title}</a>
+                </h3>
+                <p>{post.data.description}</p>
+              </div>
+              {post.data.category && (
+                <span class="post__cat">{post.data.category}</span>
+              )}
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
     )
   }
 
-  <!-- IDEAS -->
-  {
-    ideas.length > 0 && (
-      <section class="mx-auto max-w-6xl px-5 py-10">
-        <div class="flex items-baseline justify-between gap-4" data-reveal>
-          <h2 class="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl">
-            Ideas
-          </h2>
-          <a
-            href="/ideas/"
-            class="text-sm text-accent transition-colors hover:text-accent-strong"
-          >
-            All ideas →
-          </a>
-        </div>
-        <div class="mt-8 grid gap-5 sm:grid-cols-2">
-          {ideas.map((idea, i) => (
-            <div data-reveal style={`--reveal-delay: ${i * 90}ms`}>
-              <Card
-                title={idea.data.title}
-                href={`/ideas/${idea.id}/`}
-                description={idea.data.description}
-                eyebrow={idea.data.stage}
-                image={idea.data.heroImage}
-                imageAlt={idea.data.heroImageAlt}
-              />
-            </div>
-          ))}
-        </div>
-      </section>
-    )
-  }
-
-  <!-- BOOKS / AUTHOR -->
-  {
-    featuredBook && featuredBook.data.coverImage && (
-      <section class="mx-auto max-w-6xl px-5 py-10">
-        <div
-          class="overflow-hidden rounded-2xl border border-border bg-surface p-6 shadow-sm md:p-8"
-          data-reveal
-        >
-          <div class="grid items-center gap-6 sm:grid-cols-[6rem_1fr] sm:gap-8">
-            <a
-              href={`/books/${featuredBook.id}/`}
-              class="group block overflow-hidden rounded-md border border-border shadow-lg shadow-black/40"
-            >
-              <Image
-                src={featuredBook.data.coverImage}
-                alt={featuredBook.data.coverImageAlt ?? featuredBook.data.title}
-                widths={[120, 192, 240]}
-                sizes="6rem"
-                loading="lazy"
-                decoding="async"
-                class="aspect-[2/3] h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
-              />
-            </a>
-            <div class="min-w-0">
-              <h2 class="eyebrow">I also write fiction</h2>
-              <p class="mt-4 max-w-2xl text-base leading-relaxed text-ink-soft">
-                <em>{featuredBook.data.title}</em> is book one in the{' '}
-                {featuredBook.data.series}, a fantasy series by {SITE.name}.
-              </p>
-              <a
-                href={`/books/${featuredBook.id}/`}
-                class="mt-4 inline-block text-sm font-medium text-accent transition-colors hover:text-accent-strong"
-              >
-                Read about {featuredBook.data.title} →
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-    )
-  }
-
-  <!-- LINKS / CONNECT -->
-  <section class="mx-auto max-w-6xl px-5 py-16 md:py-20">
-    <div
-      class="rounded-2xl border border-border bg-gradient-to-br from-surface to-surface-2 p-8 shadow-sm md:p-12"
-      data-reveal
-    >
-      <h2 class="font-display text-2xl font-semibold tracking-tight text-ink md:text-3xl">
-        Connect
-      </h2>
-      <p class="mt-3 max-w-2xl text-muted">
-        The best ways to find me online and get in touch.
+  <!-- BOOKS -->
+  <section class="block wrap books">
+    <div>
+      <h2>Books</h2>
+      <p class="books__text">
+        I also write fiction. The Soul War Saga is a fantasy series, and book
+        one, <em>Emergence</em>, is out now.
       </p>
-      <div class="mt-6 flex flex-wrap gap-3">
-        <a
-          href={SOCIAL.linkedin}
-          target="_blank"
-          rel="me noopener noreferrer"
-          class="rounded-lg border border-border bg-base/40 px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-accent/60 hover:text-accent"
-        >
-          LinkedIn
-        </a>
-        <a
-          href={SOCIAL.facebook}
-          target="_blank"
-          rel="me noopener noreferrer"
-          class="rounded-lg border border-border bg-base/40 px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-accent/60 hover:text-accent"
-        >
-          Facebook
-        </a>
-        <a
-          href={`mailto:${CONTACT_EMAIL}`}
-          class="rounded-lg border border-border bg-base/40 px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-accent/60 hover:text-accent"
-        >
-          Email
-        </a>
-        <a
-          href="/links/"
-          class="rounded-lg border border-border bg-base/40 px-4 py-2 text-sm font-medium text-muted transition-colors hover:text-ink"
-        >
-          All links →
-        </a>
-      </div>
+      <a class="link-more" href="/books/">About the series</a>
     </div>
+    <ul class="shelf">
+      {
+        books.map((book) => (
+          <li>
+            <a href={`/books/${book.id}/`}>
+              {book.data.coverImage ? (
+                <Image
+                  src={book.data.coverImage}
+                  alt={book.data.coverImageAlt ?? book.data.title}
+                  widths={[160, 320]}
+                  sizes="9rem"
+                  loading="lazy"
+                />
+              ) : (
+                <PlaceholderCover
+                  title={book.data.title}
+                  seriesText={`Book ${book.data.bookNumber}`}
+                  variant={book.data.placeholderCover ?? 'steel'}
+                />
+              )}
+              <span class="shelf__title">{book.data.title}</span>
+            </a>
+            <span class="shelf__status">{bookStatus(book.data.status)}</span>
+          </li>
+        ))
+      }
+    </ul>
   </section>
 </BaseLayout>
+
+<style>
+  /* ---------- Hero ---------- */
+  .hero {
+    position: relative;
+    isolation: isolate;
+    padding-block: clamp(4rem, 12vh, 8rem) 4.5rem;
+  }
+  h1 {
+    font-size: clamp(2.6rem, 11vw, 6rem);
+    font-weight: 700;
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+  }
+  .hero__lede {
+    max-width: 34ch;
+    margin-top: 2rem;
+    color: var(--color-ink);
+    font-size: clamp(1.1875rem, 1.6vw + 0.8rem, 1.5rem);
+    line-height: 1.4;
+  }
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 2rem;
+    margin-top: 3rem;
+  }
+  .hero__riptide {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.75rem;
+    color: var(--color-ink);
+    font-size: 1.0625rem;
+    font-weight: 600;
+  }
+  .hero__soon {
+    color: var(--color-muted);
+    font-size: 0.8125rem;
+    font-weight: 400;
+  }
+  .hero__now {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    margin-top: 4.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
+    font-size: 0.9375rem;
+  }
+  .hero__now-label {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+  .hero__now time {
+    color: var(--color-muted);
+  }
+
+  /* ---------- Sections ---------- */
+  .block {
+    padding-block: 4.5rem;
+  }
+  .block__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem 2rem;
+  }
+  h2 {
+    font-size: clamp(1.5rem, 2vw + 1rem, 2.25rem);
+    font-weight: 650;
+    line-height: 1.1;
+  }
+  .ledger {
+    margin-top: 2rem;
+  }
+  h3 {
+    font-weight: 650;
+  }
+
+  /* Now building rows */
+  .entry h3 {
+    font-size: clamp(1.375rem, 1.5vw + 1rem, 1.75rem);
+    line-height: 1.15;
+  }
+  .entry__text {
+    max-width: 52ch;
+  }
+  .entry__status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-muted);
+    font-size: 0.9375rem;
+  }
+  .entry__dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--color-accent);
+  }
+
+  /* Writing rows */
+  .post {
+    position: relative;
+    transition: background-color 0.2s;
+  }
+  .post:hover {
+    background: var(--color-surface);
+  }
+  .post time,
+  .post__cat {
+    color: var(--color-muted);
+    font-size: 0.9375rem;
+  }
+  .post h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  /* Make the whole row clickable */
+  .post h3 a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+  .post:hover h3 a {
+    text-decoration: underline;
+    text-decoration-color: var(--color-accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 5px;
+  }
+  .post p {
+    max-width: 60ch;
+    margin-top: 0.5rem;
+    font-size: 0.9375rem;
+  }
+
+  /* ---------- Books ---------- */
+  .books {
+    display: grid;
+    gap: 3rem;
+  }
+  .books__text {
+    max-width: 38ch;
+    margin-block: 1rem 1.5rem;
+  }
+  .shelf {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 9rem));
+    gap: 1.5rem;
+  }
+  /* :global() because the covers are drawn by other components */
+  .shelf :global(img),
+  .shelf :global(.ph) {
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: 2px;
+    box-shadow: 0 14px 28px -12px rgba(0, 0, 0, 0.9);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .shelf a:hover :global(img),
+  .shelf a:hover :global(.ph) {
+    transform: translateY(-4px);
+  }
+  .shelf__title {
+    display: block;
+    margin-top: 1rem;
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+  .shelf__status {
+    color: var(--color-muted);
+    font-size: 0.8125rem;
+  }
+
+  /* ---------- Wider screens ---------- */
+  @media (min-width: 52rem) {
+    .entry {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr) minmax(0, 4fr);
+      align-items: baseline;
+    }
+    .entry__status {
+      justify-content: flex-end;
+    }
+    .post {
+      grid-template-columns: 8rem minmax(0, 1fr) auto;
+      align-items: baseline;
+      padding-inline: 0.75rem;
+      margin-inline: -0.75rem;
+    }
+    .books {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+    }
+  }
+</style>
