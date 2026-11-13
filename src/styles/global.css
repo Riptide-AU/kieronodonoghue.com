@@ -206,6 +206,65 @@ body {
     text-underline-offset: 8px;
   }
 
+  /* Top of a section page: big title with an intro line under it. */
+  .page-head {
+    padding-block: clamp(3rem, 9vh, 6rem) 2rem;
+  }
+  .page-title {
+    font-size: clamp(2.25rem, 6vw, 4rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+  .lede {
+    max-width: 46ch;
+    margin-top: 1.5rem;
+    color: var(--color-ink);
+    font-size: clamp(1.125rem, 1vw + 0.9rem, 1.375rem);
+    line-height: 1.45;
+  }
+
+  /* A section of a page, with its heading. */
+  .section {
+    padding-block: 3.5rem;
+  }
+  .section-title {
+    font-size: clamp(1.5rem, 2vw + 1rem, 2.25rem);
+    font-weight: 650;
+    line-height: 1.1;
+  }
+  .section-title + .ledger,
+  .section-head + .ledger {
+    margin-top: 2rem;
+  }
+  /* Heading on the left, a "see all" link on the right. */
+  .section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem 2rem;
+  }
+
+  /* Small grey supporting text: dates, statuses, categories. */
+  .meta {
+    color: var(--color-muted);
+    font-size: 0.9375rem;
+  }
+
+  /* "Back to ..." link at the top of a detail page. */
+  .back-link {
+    display: inline-block;
+    padding-block: 0.5rem;
+    color: var(--color-muted);
+    font-size: 0.9375rem;
+    transition: color 0.2s;
+  }
+  .back-link:hover {
+    color: var(--color-ink);
+  }
+
   /* The ledger: a list of rows separated by hairlines, instead of cards. */
   .ledger {
     border-top: 1px solid var(--color-border);

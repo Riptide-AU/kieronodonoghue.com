@@ -28,25 +28,23 @@ const statusClass = (status: string) =>
   title="Books"
   description="Fiction by Kieron O’Donoghue — the Soul War Saga, an ongoing epic fantasy series beginning with Emergence."
 >
-  <section class="mx-auto max-w-5xl px-5 py-16">
-    <p class="text-xs font-semibold uppercase tracking-wider text-accent">
-      Fiction
-    </p>
-    <h1 class="mt-2 text-3xl font-bold tracking-tight text-ink md:text-4xl">
-      Books
-    </h1>
-    <p class="mt-4 max-w-2xl text-lg text-muted">
+  <section class="page-head wrap">
+    <h1 class="page-title">Books</h1>
+    <p class="lede">
       Alongside the analytical work, I write fiction. The Soul War Saga is an
-      ongoing epic fantasy series — here's what's out and what's coming next.
+      ongoing epic fantasy series. Here’s what’s out and what’s coming next.
     </p>
+  </section>
+
+  <section class="section wrap">
 
     {
       books.length > 0 ? (
-        <div class="mt-12 flex flex-col gap-8">
+        <div class="flex flex-col border-t border-border">
           {books.map((book) => {
             const label = ordinal(book.data.bookNumber);
             const seriesLine = book.data.series
-              ? `${book.data.series}${label ? ` — Book ${label}` : ''}`
+              ? `${book.data.series}${label ? `, Book ${label}` : ''}`
               : undefined;
             const seriesText =
               book.data.series && label
@@ -58,10 +56,10 @@ const statusClass = (status: string) =>
             return (
               <a
                 href={`/books/${book.id}/`}
-                class="group grid gap-6 rounded-2xl border border-border bg-surface p-6 transition-colors hover:border-accent/60 hover:bg-surface-2 sm:grid-cols-[8rem_1fr] sm:gap-8 sm:p-8"
+                class="group grid gap-6 border-b border-border py-8 transition-colors hover:bg-surface sm:grid-cols-[8rem_1fr] sm:gap-8"
               >
                 {book.data.coverImage ? (
-                  <div class="overflow-hidden rounded-md border border-border shadow-lg shadow-black/40">
+                  <div class="overflow-hidden rounded-sm shadow-lg shadow-black/60">
                     <Image
                       src={book.data.coverImage}
                       alt={book.data.coverImageAlt ?? book.data.title}
@@ -82,13 +80,11 @@ const statusClass = (status: string) =>
                 <div class="min-w-0">
                   <div class="flex flex-wrap items-center gap-2">
                     {seriesLine && (
-                      <p class="text-xs font-semibold uppercase tracking-wider text-accent">
-                        {seriesLine}
-                      </p>
+                      <p class="text-sm text-muted">{seriesLine}</p>
                     )}
                     <span
                       class:list={[
-                        'rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider',
+                        'rounded-full border px-2 py-0.5 text-xs',
                         statusClass(book.data.status),
                       ]}
                     >
@@ -113,9 +109,7 @@ const statusClass = (status: string) =>
                       {summary}
                     </p>
                   )}
-                  <span class="mt-4 inline-block text-sm font-medium text-accent group-hover:text-accent-strong">
-                    View book →
-                  </span>
+                  <span class="link-more mt-4 inline-block">View book</span>
                 </div>
               </a>
             );

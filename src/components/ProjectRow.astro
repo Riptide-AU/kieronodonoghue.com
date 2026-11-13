@@ -1,0 +1,79 @@
+---
+/*
+  One row in a list of projects: name, one-line description and status.
+  Use inside <ul class="ledger">. The whole row is clickable.
+  Set `active` to show the green dot for things being built right now.
+*/
+interface Props {
+  title: string;
+  href: string;
+  description: string;
+  status: string;
+  active?: boolean;
+}
+
+const { title, href, description, status, active = false } = Astro.props;
+---
+
+<li class="project">
+  <h3><a href={href}>{title}</a></h3>
+  <p class="project__text">{description}</p>
+  <p class="project__status meta">
+    {active && <span class="project__dot" aria-hidden="true" />}
+    {status}
+  </p>
+</li>
+
+<style>
+  .project {
+    position: relative;
+    transition: background-color 0.2s;
+  }
+  .project:hover {
+    background: var(--color-surface);
+  }
+  h3 {
+    font-size: clamp(1.25rem, 1.2vw + 1rem, 1.625rem);
+    font-weight: 650;
+    line-height: 1.15;
+  }
+  /* Stretch the link over the whole row */
+  h3 a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+  .project:hover h3 a {
+    text-decoration: underline;
+    text-decoration-color: var(--color-accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 5px;
+  }
+  .project__text {
+    max-width: 52ch;
+  }
+  .project__status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .project__dot {
+    flex: none;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--color-accent);
+  }
+  @media (min-width: 52rem) {
+    .project {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr) minmax(0, 4fr);
+      align-items: baseline;
+      padding-inline: 0.75rem;
+      margin-inline: -0.75rem;
+    }
+    .project__status {
+      justify-content: flex-end;
+      text-align: right;
+    }
+  }
+</style>

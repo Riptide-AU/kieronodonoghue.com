@@ -26,12 +26,10 @@ export const NOW = {
 
 /**
  * Primary navigation. Order matters.
- * "Building" points at /projects/ until the Building section is created
- * (step 5 of the redesign), when it becomes /building/.
  */
 export const NAV = [
   { label: 'Home', href: '/' },
-  { label: 'Building', href: '/projects/' },
+  { label: 'Building', href: '/building/' },
   { label: 'Writing', href: '/writing/' },
   { label: 'Books', href: '/books/' },
   { label: 'About', href: '/about/' },
@@ -39,13 +37,12 @@ export const NAV = [
 
 /**
  * Riptide Digital, Kieron's app business.
- * While `live` is false the site shows "coming soon" instead of a link.
- * Set it to true once riptidedigital.com.au is up.
+ * If `live` is set to false the site shows "coming soon" instead of a link.
  */
 export const RIPTIDE = {
   name: 'Riptide Digital',
   url: 'https://riptidedigital.com.au',
-  live: false,
+  live: true,
 } as const;
 
 export const CONTACT_EMAIL = 'kieron_o@outlook.com';

@@ -3,6 +3,7 @@ import { getCollection, render } from 'astro:content';
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import FeatureImage from '../../components/FeatureImage.astro';
+import { SITE } from '../../consts';
 
 export const getStaticPaths = (async () => {
   const posts = await getCollection('writing', (p) => !p.data.draft);
@@ -31,40 +32,26 @@ const fmt = (d: Date) =>
   modifiedDate={entry.data.updatedDate}
   image={entry.data.heroImage?.src}
 >
-  <article class="mx-auto max-w-prose px-5 py-16">
-    <a
-      href="/writing/"
-      class="text-sm text-muted transition-colors hover:text-accent"
-    >
-      ← Writing
-    </a>
-
-    <div class="mt-6 flex flex-wrap items-center gap-2 text-xs text-muted">
-      {
-        entry.data.category && (
-          <span class="font-semibold uppercase tracking-wider text-accent">
-            {entry.data.category}
-          </span>
-        )
-      }
-      {entry.data.category && <span aria-hidden="true">·</span>}
-      <time datetime={entry.data.pubDate.toISOString().slice(0, 10)}>
-        {fmt(entry.data.pubDate)}
-      </time>
-      {
-        entry.data.updatedDate && (
-          <span>· Updated {fmt(entry.data.updatedDate)}</span>
-        )
-      }
-    </div>
-
-    <h1 class="mt-3 text-3xl font-bold tracking-tight text-ink md:text-4xl">
-      {entry.data.title}
-    </h1>
+  <article class="wrap post">
+    <header class="page-head">
+      <a href="/writing/" class="back-link">Back to Writing</a>
+      <h1 class="page-title">{entry.data.title}</h1>
+      <p class="meta post__meta">
+        <time datetime={entry.data.pubDate.toISOString().slice(0, 10)}>
+          {fmt(entry.data.pubDate)}
+        </time>
+        {entry.data.category && <span>{entry.data.category}</span>}
+        {
+          entry.data.updatedDate && (
+            <span>Updated {fmt(entry.data.updatedDate)}</span>
+          )
+        }
+      </p>
+    </header>
 
     {
       entry.data.heroImage && (
-        <div class="mt-8">
+        <div class="post__image">
           <FeatureImage
             src={entry.data.heroImage}
             alt={entry.data.heroImageAlt ?? entry.data.title}
@@ -75,13 +62,38 @@ const fmt = (d: Date) =>
       )
     }
 
-    <!-- Solid reading surface so body copy stays readable over the animated background. -->
-    <div class="mt-8 rounded-2xl border border-border bg-surface p-6 md:p-8">
-      <div class="prose">
-        <Content />
-      </div>
+    <div class="prose">
+      <Content />
     </div>
 
-    <p class="mt-8 text-sm text-muted">By Kieron O'Donoghue</p>
+    <p class="meta post__byline">By {SITE.name}</p>
   </article>
 </BaseLayout>
+
+<style>
+  /* One reading column, lined up with the left edge of the page */
+  .post .page-title {
+    max-width: 20ch;
+    font-size: clamp(2rem, 4.5vw, 3.25rem);
+    line-height: 1.05;
+  }
+  .post__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.5rem;
+    margin-top: 1.5rem;
+  }
+  .post__image,
+  .prose {
+    max-width: 44rem;
+  }
+  .post__image {
+    margin-bottom: 2rem;
+  }
+  .post__byline {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    max-width: 44rem;
+    border-top: 1px solid var(--color-border);
+  }
+</style>

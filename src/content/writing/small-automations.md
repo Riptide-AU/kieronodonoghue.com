@@ -2,7 +2,7 @@
 title: "Small automations beat big systems"
 description: "A working theory that most process improvement comes from many small automations, not one large system."
 pubDate: 2026-05-29
-stage: "Growing"
+category: "Ideas"
 tags: ["Automation", "Process improvement"]
 ---
 

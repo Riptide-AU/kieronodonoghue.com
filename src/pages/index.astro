@@ -4,7 +4,9 @@ import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import HeroRain from '../components/HeroRain.astro';
 import PlaceholderCover from '../components/PlaceholderCover.astro';
-import { SITE, NAV, NOW, RIPTIDE } from '../consts';
+import PostRow from '../components/PostRow.astro';
+import ProjectRow from '../components/ProjectRow.astro';
+import { SITE, NOW, RIPTIDE } from '../consts';
 
 const formatDate = (d: Date) =>
   new Intl.DateTimeFormat('en-AU', {
@@ -13,8 +15,15 @@ const formatDate = (d: Date) =>
     year: 'numeric',
   }).format(d);
 
-// Where the "What I'm building" button goes: the Building item in the nav.
-const buildingHref = NAV.find((item) => item.label === 'Building')?.href ?? '/';
+// "Now building": projects marked both `current` and `featured`, newest first.
+const building = (
+  await getCollection(
+    'projects',
+    (p) => !p.data.draft && p.data.current && p.data.featured,
+  )
+)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 3);
 
 // The three most recent posts. Drafts are excluded.
 const writing = (await getCollection('writing', (p) => !p.data.draft))
@@ -45,7 +54,7 @@ const bookStatus = (status: string) =>
     </p>
 
     <div class="hero__actions">
-      <a class="btn-accent" href={buildingHref}>
+      <a class="btn-accent" href="/building/">
         What I’m building
         <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
           <path
@@ -77,66 +86,45 @@ const bookStatus = (status: string) =>
   </section>
 
   <!-- NOW BUILDING -->
-  <section class="block wrap">
-    <h2>Now building</h2>
+  <section class="section wrap">
+    <div class="section-head">
+      <h2 class="section-title">Now building</h2>
+      <a class="link-more" href="/building/">Everything I’m building</a>
+    </div>
     <ul class="ledger">
-      <li class="entry">
-        <h3>PainTrail</h3>
-        <p class="entry__text">
-          A pain diary app. Quick to fill in, works offline, and keeps your
-          entries on your own phone.
-        </p>
-        <p class="entry__status">
-          <span class="entry__dot" aria-hidden="true"></span>
-          In development, Android first
-        </p>
-      </li>
-      <li class="entry">
-        <h3>{RIPTIDE.name}</h3>
-        <p class="entry__text">
-          My independent app studio. PainTrail is its first app.
-        </p>
-        <p class="entry__status">
-          {
-            RIPTIDE.live ? (
-              <a class="link-more" href={RIPTIDE.url}>
-                riptidedigital.com.au
-              </a>
-            ) : (
-              'Website coming soon'
-            )
-          }
-        </p>
-      </li>
+      {
+        building.map((p) => (
+          <ProjectRow
+            title={p.data.title}
+            href={`/building/${p.id}/`}
+            description={p.data.description}
+            status={p.data.status}
+            active
+          />
+        ))
+      }
     </ul>
   </section>
 
   <!-- RECENT WRITING -->
   {
     writing.length > 0 && (
-      <section class="block wrap">
-        <div class="block__head">
-          <h2>Recent writing</h2>
+      <section class="section wrap">
+        <div class="section-head">
+          <h2 class="section-title">Recent writing</h2>
           <a class="link-more" href="/writing/">
             All writing
           </a>
         </div>
         <ul class="ledger">
           {writing.map((post) => (
-            <li class="post">
-              <time datetime={post.data.pubDate.toISOString().slice(0, 10)}>
-                {formatDate(post.data.pubDate)}
-              </time>
-              <div>
-                <h3>
-                  <a href={`/writing/${post.id}/`}>{post.data.title}</a>
-                </h3>
-                <p>{post.data.description}</p>
-              </div>
-              {post.data.category && (
-                <span class="post__cat">{post.data.category}</span>
-              )}
-            </li>
+            <PostRow
+              title={post.data.title}
+              href={`/writing/${post.id}/`}
+              description={post.data.description}
+              date={post.data.pubDate}
+              category={post.data.category}
+            />
           ))}
         </ul>
       </section>
@@ -144,9 +132,9 @@ const bookStatus = (status: string) =>
   }
 
   <!-- BOOKS -->
-  <section class="block wrap books">
+  <section class="section wrap books">
     <div>
-      <h2>Books</h2>
+      <h2 class="section-title">Books</h2>
       <p class="books__text">
         I also write fiction. The Soul War Saga is a fantasy series, and book
         one, <em>Emergence</em>, is out now.
@@ -241,87 +229,6 @@ const bookStatus = (status: string) =>
     color: var(--color-muted);
   }
 
-  /* ---------- Sections ---------- */
-  .block {
-    padding-block: 4.5rem;
-  }
-  .block__head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.75rem 2rem;
-  }
-  h2 {
-    font-size: clamp(1.5rem, 2vw + 1rem, 2.25rem);
-    font-weight: 650;
-    line-height: 1.1;
-  }
-  .ledger {
-    margin-top: 2rem;
-  }
-  h3 {
-    font-weight: 650;
-  }
-
-  /* Now building rows */
-  .entry h3 {
-    font-size: clamp(1.375rem, 1.5vw + 1rem, 1.75rem);
-    line-height: 1.15;
-  }
-  .entry__text {
-    max-width: 52ch;
-  }
-  .entry__status {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--color-muted);
-    font-size: 0.9375rem;
-  }
-  .entry__dot {
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background: var(--color-accent);
-  }
-
-  /* Writing rows */
-  .post {
-    position: relative;
-    transition: background-color 0.2s;
-  }
-  .post:hover {
-    background: var(--color-surface);
-  }
-  .post time,
-  .post__cat {
-    color: var(--color-muted);
-    font-size: 0.9375rem;
-  }
-  .post h3 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-  }
-  /* Make the whole row clickable */
-  .post h3 a::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-  }
-  .post:hover h3 a {
-    text-decoration: underline;
-    text-decoration-color: var(--color-accent);
-    text-decoration-thickness: 1px;
-    text-underline-offset: 5px;
-  }
-  .post p {
-    max-width: 60ch;
-    margin-top: 0.5rem;
-    font-size: 0.9375rem;
-  }
-
   /* ---------- Books ---------- */
   .books {
     display: grid;
@@ -360,21 +267,7 @@ const bookStatus = (status: string) =>
     font-size: 0.8125rem;
   }
 
-  /* ---------- Wider screens ---------- */
   @media (min-width: 52rem) {
-    .entry {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr) minmax(0, 4fr);
-      align-items: baseline;
-    }
-    .entry__status {
-      justify-content: flex-end;
-    }
-    .post {
-      grid-template-columns: 8rem minmax(0, 1fr) auto;
-      align-items: baseline;
-      padding-inline: 0.75rem;
-      margin-inline: -0.75rem;
-    }
     .books {
       grid-template-columns: minmax(0, 1fr) auto;
       align-items: end;

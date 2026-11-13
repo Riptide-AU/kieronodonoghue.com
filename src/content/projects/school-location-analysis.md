@@ -1,8 +1,8 @@
 ---
-title: "Saint Ann's School Location Analysis"
-description: "A data analysis project weighing location factors to support a school siting decision."
+title: "School Location Analysis"
+description: "A location analysis for an overseas school looking for an Australian campus."
 status: "Completed"
-date: 2023-11-20
+date: 2025-07-01
 tools: ["Excel", "Data analysis", "Mapping"]
 tags: ["Analytics", "Business analytics"]
 featured: false
@@ -10,8 +10,8 @@ featured: false
 
 ## Overview
 
-A location analysis project that brought together several factors to help reason about
-where a school could best be sited.
+A location analysis for an overseas school looking for an Australian campus. It brought
+several factors together to help reason about where the campus could best be sited.
 
 ## Context
 
