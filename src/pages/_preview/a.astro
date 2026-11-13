@@ -1,0 +1,786 @@
+---
+/*
+  DESIGN PREVIEW A: "Build log"
+  A static mock-up of the home page for comparing design directions.
+  It is self-contained on purpose: its own tokens, fonts and styles, so it
+  doesn't touch global.css or the live layout.
+
+  Astro skips folders that start with "_", so this page is never built or
+  deployed. astro.config.mjs makes it viewable in `npm run dev` only, at
+  /_preview/a
+*/
+import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
+import PlaceholderCover from '../../components/PlaceholderCover.astro';
+import { SITE, SOCIAL, CONTACT_EMAIL } from '../../consts';
+import '@fontsource-variable/archivo/wdth.css';
+
+const formatDate = (d: Date) =>
+  new Intl.DateTimeFormat('en-AU', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(d);
+
+const writing = (await getCollection('writing', (p) => !p.data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
+
+const books = (await getCollection('books', (b) => !b.data.draft)).sort(
+  (a, b) => (a.data.bookNumber ?? 0) - (b.data.bookNumber ?? 0),
+);
+
+const bookStatus = (status: string) =>
+  status === 'Published' ? 'Out now' : status;
+
+// Draft copy for the preview only. The real page will read these from consts.
+const now = {
+  date: '13 Nov 2026',
+  text: 'Building PainTrail and setting up Riptide Digital.',
+};
+
+const nav = [
+  { label: 'Home', href: '/_preview/a' },
+  { label: 'Building', href: '#building' },
+  { label: 'Writing', href: '#writing' },
+  { label: 'Books', href: '#books' },
+  { label: 'About', href: '/about/' },
+];
+
+const links = [
+  { label: 'LinkedIn', href: SOCIAL.linkedin },
+  { label: 'GitHub', href: SOCIAL.github },
+  { label: 'Facebook', href: SOCIAL.facebook },
+  { label: 'Amazon', href: SOCIAL.amazon },
+  { label: 'Goodreads', href: SOCIAL.goodreads },
+  { label: 'Email', href: `mailto:${CONTACT_EMAIL}` },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Preview A: Build log · {SITE.name}</title>
+  </head>
+  <body class="pv-a">
+    <a href="#main" class="skip">Skip to content</a>
+
+    <p class="pv-note">
+      Design preview A, “Build log”. Not a live page.
+      <a href="/_preview/b">Compare with B</a>
+    </p>
+
+    <header class="top wrap">
+      <a href="/_preview/a" class="top__name">{SITE.name}</a>
+      <nav aria-label="Primary">
+        <ul class="top__nav">
+          {
+            nav.map((item, i) => (
+              <li>
+                <a href={item.href} aria-current={i === 0 ? 'page' : undefined}>
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </header>
+
+    <main id="main">
+      <!-- HERO -->
+      <section class="hero wrap" aria-label="Introduction">
+        <canvas class="rain" aria-hidden="true"></canvas>
+
+        <h1>Kieron<br />O’Donoghue</h1>
+
+        <p class="hero__lede">
+          I’m a business analyst who builds things: apps, tools and systems
+          that solve practical problems.
+        </p>
+
+        <div class="hero__actions">
+          <a class="btn" href="#building">
+            What I’m building
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+              <path d="M3 8h10M9 4l4 4-4 4" />
+            </svg>
+          </a>
+          <span class="soon">
+            Riptide Digital
+            <span class="soon__tag">site coming soon</span>
+          </span>
+        </div>
+
+        <p class="hero__now">
+          <span class="hero__now-label">Now</span>
+          <time>{now.date}</time>
+          <span>{now.text}</span>
+        </p>
+      </section>
+
+      <!-- NOW BUILDING -->
+      <section id="building" class="block wrap">
+        <h2>Now building</h2>
+        <ul class="ledger">
+          <li class="entry">
+            <h3>PainTrail</h3>
+            <p class="entry__text">
+              A pain diary app. Quick to fill in, works offline, and keeps
+              your entries on your own phone.
+            </p>
+            <p class="entry__status">
+              <span class="dot" aria-hidden="true"></span>
+              In development, Android first
+            </p>
+          </li>
+          <li class="entry">
+            <h3>Riptide Digital</h3>
+            <p class="entry__text">
+              My independent app studio. PainTrail is its first app.
+            </p>
+            <p class="entry__status">Website coming soon</p>
+          </li>
+        </ul>
+      </section>
+
+      <!-- RECENT WRITING -->
+      <section id="writing" class="block wrap">
+        <div class="block__head">
+          <h2>Recent writing</h2>
+          <a class="more" href="/writing/">All writing</a>
+        </div>
+        <ul class="ledger">
+          {
+            writing.map((post) => (
+              <li class="post">
+                <time datetime={post.data.pubDate.toISOString()}>
+                  {formatDate(post.data.pubDate)}
+                </time>
+                <div>
+                  <h3>
+                    <a href={`/writing/${post.id}/`}>{post.data.title}</a>
+                  </h3>
+                  <p>{post.data.description}</p>
+                </div>
+                <span class="post__cat">{post.data.category}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <!-- BOOKS -->
+      <section id="books" class="block wrap books">
+        <div class="books__text">
+          <h2>Books</h2>
+          <p>
+            I also write fiction. The Soul War Saga is a fantasy series, and
+            book one, <em>Emergence</em>, is out now.
+          </p>
+          <a class="more" href="/books/">About the series</a>
+        </div>
+        <ul class="shelf">
+          {
+            books.map((book) => (
+              <li>
+                <a href={`/books/${book.id}/`}>
+                  {book.data.coverImage ? (
+                    <Image
+                      src={book.data.coverImage}
+                      alt={book.data.coverImageAlt ?? book.data.title}
+                      widths={[160, 320]}
+                      sizes="9rem"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <PlaceholderCover
+                      title={book.data.title}
+                      seriesText={`Book ${book.data.bookNumber}`}
+                      variant={book.data.placeholderCover ?? 'steel'}
+                    />
+                  )}
+                  <span class="shelf__title">{book.data.title}</span>
+                </a>
+                <span class="shelf__status">{bookStatus(book.data.status)}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+    </main>
+
+    <footer class="wrap">
+      <div class="foot">
+      <p class="foot__name">{SITE.name}</p>
+      <ul class="foot__links">
+        {
+          links.map((link) => (
+            <li>
+              <a href={link.href}>{link.label}</a>
+            </li>
+          ))
+        }
+        <li class="foot__soon">Riptide Digital (soon)</li>
+      </ul>
+      <p class="foot__legal">© 2026 {SITE.name}</p>
+      </div>
+    </footer>
+
+    <!--
+      Signature motion: a quiet version of the site's data rain.
+      Hero only, thin slow lines on the right-hand side, paused when the hero
+      is off screen or the tab is hidden. Under reduced motion it draws one
+      still frame and never animates.
+    -->
+    <script is:inline>
+      (() => {
+        const canvas = document.querySelector('.rain');
+        const ctx = canvas && canvas.getContext('2d');
+        if (!ctx) return;
+
+        const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+        let w = 0;
+        let h = 0;
+        let drops = [];
+        let raf = 0;
+        let last = 0;
+        let onScreen = true;
+
+        const newDrop = (x, y) => ({
+          x,
+          y,
+          len: 30 + Math.random() * 90,
+          speed: 12 + Math.random() * 26, // pixels per second: slow
+          alpha: 0.18 + Math.random() * 0.37,
+        });
+
+        function setup() {
+          const dpr = Math.min(window.devicePixelRatio || 1, 2);
+          const box = canvas.getBoundingClientRect();
+          w = box.width;
+          h = box.height;
+          canvas.width = Math.floor(w * dpr);
+          canvas.height = Math.floor(h * dpr);
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          const count = Math.max(6, Math.floor(w / 30));
+          drops = Array.from({ length: count }, (_, i) =>
+            newDrop(Math.round(((i + Math.random()) * w) / count), Math.random() * h),
+          );
+        }
+
+        function draw(dt) {
+          ctx.clearRect(0, 0, w, h);
+          for (const d of drops) {
+            d.y += d.speed * dt;
+            if (d.y - d.len > h) Object.assign(d, newDrop(d.x, -Math.random() * 80));
+            const fade = ctx.createLinearGradient(0, d.y - d.len, 0, d.y);
+            fade.addColorStop(0, 'rgba(61, 252, 140, 0)');
+            fade.addColorStop(1, 'rgba(61, 252, 140, ' + d.alpha + ')');
+            ctx.fillStyle = fade;
+            ctx.fillRect(d.x, d.y - d.len, 1, d.len);
+          }
+        }
+
+        function loop(t) {
+          raf = requestAnimationFrame(loop);
+          const dt = Math.min((t - last) / 1000, 0.05);
+          last = t;
+          draw(dt);
+        }
+
+        function start() {
+          cancelAnimationFrame(raf);
+          if (reduce.matches) return draw(0); // one still frame
+          if (!onScreen || document.hidden) return;
+          last = performance.now();
+          raf = requestAnimationFrame(loop);
+        }
+
+        setup();
+        start();
+
+        new IntersectionObserver(([entry]) => {
+          onScreen = entry.isIntersecting;
+          start();
+        }).observe(canvas);
+        document.addEventListener('visibilitychange', start);
+        reduce.addEventListener('change', start);
+
+        let timer = 0;
+        window.addEventListener('resize', () => {
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            setup();
+            start();
+          }, 150);
+        });
+      })();
+    </script>
+
+    <style is:global>
+      /* ---------- Tokens ---------- */
+      .pv-a {
+        /* Colour (contrast against --base in brackets) */
+        --base: #0a0c0b; /* near-black with a trace of green */
+        --surface: #121514; /* row hover only */
+        --line: #262b28; /* hairlines, decorative */
+        --ink: #f1f4f2; /* headings, primary text (17.7:1) */
+        --soft: #c3c9c5; /* body text (11.7:1) */
+        --muted: #8d9690; /* dates, meta, small text (6.4:1) */
+        --accent: #3dfc8c; /* the one green (14.5:1) */
+        --on-accent: #04140b; /* text on green (14.0:1) */
+
+        /* Type: one family, two widths. Wide for display, normal for text. */
+        --font: 'Archivo Variable', system-ui, sans-serif;
+        --font-serif: Georgia, 'Times New Roman', serif; /* placeholder cover */
+        --t-meta: 0.8125rem; /* 13px */
+        --t-small: 0.9375rem; /* 15px */
+        --t-body: 1.0625rem; /* 17px */
+        --t-lede: clamp(1.1875rem, 1.6vw + 0.8rem, 1.5rem);
+        --t-h3: clamp(1.375rem, 1.5vw + 1rem, 1.75rem);
+        --t-h2: clamp(1.5rem, 2vw + 1rem, 2.25rem);
+        --t-display: clamp(2.6rem, 11vw, 6rem);
+
+        /* Spacing: 4px base */
+        --s2: 0.5rem;
+        --s3: 0.75rem;
+        --s4: 1rem;
+        --s5: 1.5rem;
+        --s6: 2rem;
+        --s7: 3rem;
+        --s8: 4.5rem;
+        --s9: 7rem;
+        --s10: 10rem;
+
+        --ease: cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      /* ---------- Base ---------- */
+      html {
+        background: #0a0c0b;
+        color-scheme: dark;
+        scroll-behavior: smooth;
+        scrollbar-color: #262b28 #0a0c0b;
+      }
+      .pv-a {
+        margin: 0;
+        background: var(--base);
+        color: var(--soft);
+        font-family: var(--font);
+        font-size: var(--t-body);
+        line-height: 1.6;
+        font-synthesis: none;
+        -webkit-font-smoothing: antialiased;
+      }
+      .pv-a *,
+      .pv-a *::before,
+      .pv-a *::after {
+        box-sizing: border-box;
+      }
+      .pv-a h1,
+      .pv-a h2,
+      .pv-a h3,
+      .pv-a p,
+      .pv-a ul {
+        margin: 0;
+        padding: 0;
+      }
+      .pv-a ul {
+        list-style: none;
+      }
+      .pv-a a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .pv-a img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+      }
+      .pv-a ::selection {
+        background: var(--accent);
+        color: var(--on-accent);
+      }
+      .pv-a :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+      }
+      .pv-a time,
+      .pv-a .hero__now {
+        font-variant-numeric: tabular-nums;
+      }
+      .pv-a .wrap {
+        max-width: 76rem;
+        margin-inline: auto;
+        padding-inline: clamp(1.25rem, 4vw, 3rem);
+      }
+      .pv-a .skip {
+        position: absolute;
+        left: -999px;
+        top: 0;
+        z-index: 10;
+        padding: var(--s2) var(--s4);
+        background: var(--accent);
+        color: var(--on-accent);
+        font-weight: 600;
+      }
+      .pv-a .skip:focus {
+        left: 0;
+      }
+      .pv-a .pv-note {
+        padding: var(--s2) var(--s4);
+        border-bottom: 1px solid var(--line);
+        color: var(--muted);
+        font-size: var(--t-meta);
+        text-align: center;
+      }
+      .pv-a .pv-note a {
+        color: var(--ink);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+
+      /* Wide display voice, shared by the name and headings */
+      .pv-a h1,
+      .pv-a h2,
+      .pv-a h3,
+      .pv-a .top__name,
+      .pv-a .foot__name {
+        color: var(--ink);
+        font-stretch: 125%;
+        font-weight: 650;
+        letter-spacing: -0.02em;
+        text-wrap: balance;
+      }
+
+      /* ---------- Header ---------- */
+      .pv-a .top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--s3) var(--s6);
+        padding-block: var(--s5);
+      }
+      .pv-a .top__name {
+        font-size: var(--t-small);
+      }
+      .pv-a .top__nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--s2) var(--s5);
+        font-size: var(--t-small);
+      }
+      .pv-a .top__nav a {
+        display: block;
+        padding-block: var(--s2);
+        color: var(--muted);
+        border-bottom: 1px solid transparent;
+        transition:
+          color 0.2s,
+          border-color 0.2s;
+      }
+      .pv-a .top__nav a:hover {
+        color: var(--ink);
+      }
+      .pv-a .top__nav a[aria-current='page'] {
+        color: var(--ink);
+        border-color: var(--accent);
+      }
+
+      /* ---------- Hero ---------- */
+      .pv-a .hero {
+        position: relative;
+        isolation: isolate;
+        padding-block: clamp(4rem, 12vh, 8rem) var(--s8);
+      }
+      .pv-a .rain {
+        position: absolute;
+        z-index: -1;
+        top: 0;
+        right: 0;
+        width: 46%;
+        height: 100%;
+        /* Fade out towards the text and at the top and bottom edges */
+        mask-image:
+          linear-gradient(to right, transparent, #000 55%),
+          linear-gradient(to bottom, transparent, #000 20%, #000 75%, transparent);
+        mask-composite: intersect;
+      }
+      .pv-a h1 {
+        font-size: var(--t-display);
+        font-weight: 700;
+        line-height: 0.95;
+        letter-spacing: -0.035em;
+      }
+      .pv-a .hero__lede {
+        max-width: 34ch;
+        margin-top: var(--s6);
+        color: var(--ink);
+        font-size: var(--t-lede);
+        line-height: 1.4;
+      }
+      .pv-a .hero__actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--s4) var(--s6);
+        margin-top: var(--s7);
+      }
+      .pv-a .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--s3);
+        min-height: 3rem;
+        padding: var(--s3) var(--s5);
+        border-radius: 2px;
+        background: var(--accent);
+        color: var(--on-accent);
+        font-weight: 650;
+        transition: gap 0.3s var(--ease);
+      }
+      .pv-a .btn:hover {
+        gap: var(--s4);
+      }
+      .pv-a .btn svg {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.75;
+      }
+      .pv-a .soon {
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: var(--s3);
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .pv-a .soon__tag,
+      .pv-a .foot__soon {
+        color: var(--muted);
+        font-size: var(--t-meta);
+        font-weight: 400;
+      }
+      .pv-a .hero__now {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--s2) var(--s5);
+        margin-top: var(--s8);
+        padding-top: var(--s4);
+        border-top: 1px solid var(--line);
+        font-size: var(--t-small);
+      }
+      .pv-a .hero__now-label {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .pv-a .hero__now time {
+        color: var(--muted);
+      }
+
+      /* ---------- Sections ---------- */
+      .pv-a .block {
+        padding-block: var(--s8);
+      }
+      .pv-a .block__head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--s3) var(--s6);
+      }
+      .pv-a h2 {
+        font-size: var(--t-h2);
+        line-height: 1.1;
+      }
+      .pv-a .more {
+        color: var(--ink);
+        font-size: var(--t-small);
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 5px;
+        transition: text-underline-offset 0.2s;
+      }
+      .pv-a .more:hover {
+        text-underline-offset: 8px;
+      }
+
+      /* The ledger: rows separated by hairlines, no cards */
+      .pv-a .ledger {
+        margin-top: var(--s6);
+        border-top: 1px solid var(--line);
+      }
+      .pv-a .ledger > li {
+        display: grid;
+        gap: var(--s2) var(--s6);
+        padding-block: var(--s5);
+        border-bottom: 1px solid var(--line);
+      }
+      .pv-a .ledger h3 {
+        font-size: var(--t-h3);
+        line-height: 1.15;
+      }
+      .pv-a .entry__text {
+        max-width: 52ch;
+      }
+      .pv-a .entry__status,
+      .pv-a .post time,
+      .pv-a .post__cat {
+        color: var(--muted);
+        font-size: var(--t-small);
+      }
+      .pv-a .entry__status {
+        display: flex;
+        align-items: center;
+        gap: var(--s2);
+      }
+      .pv-a .dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+      .pv-a .post {
+        position: relative;
+        transition: background-color 0.2s;
+      }
+      .pv-a .post:hover {
+        background: var(--surface);
+      }
+      .pv-a .post h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      /* Make the whole row clickable */
+      .pv-a .post h3 a::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+      }
+      .pv-a .post:hover h3 a {
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 5px;
+      }
+      .pv-a .post p {
+        max-width: 60ch;
+        margin-top: var(--s2);
+        font-size: var(--t-small);
+      }
+
+      /* ---------- Books ---------- */
+      .pv-a .books {
+        display: grid;
+        gap: var(--s7);
+      }
+      .pv-a .books__text p {
+        max-width: 38ch;
+        margin-block: var(--s4) var(--s5);
+      }
+      .pv-a .shelf {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 9rem));
+        gap: var(--s5);
+      }
+      .pv-a .shelf img,
+      .pv-a .shelf .ph {
+        aspect-ratio: 2 / 3;
+        object-fit: cover;
+        border-radius: 2px;
+        box-shadow: 0 14px 28px -12px rgba(0, 0, 0, 0.9);
+        transition: transform 0.4s var(--ease);
+      }
+      .pv-a .shelf a:hover img,
+      .pv-a .shelf a:hover .ph {
+        transform: translateY(-4px);
+      }
+      .pv-a .shelf__title {
+        display: block;
+        margin-top: var(--s4);
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .pv-a .shelf__status {
+        color: var(--muted);
+        font-size: var(--t-meta);
+      }
+
+      /* ---------- Footer ---------- */
+      .pv-a .foot {
+        display: grid;
+        gap: var(--s5);
+        margin-top: var(--s8);
+        padding-block: var(--s7) var(--s8);
+        border-top: 1px solid var(--line);
+      }
+      .pv-a .foot__name {
+        font-size: var(--t-h3);
+      }
+      .pv-a .foot__links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--s2) var(--s5);
+        font-size: var(--t-small);
+      }
+      .pv-a .foot__links a {
+        display: block;
+        padding-block: var(--s2);
+        color: var(--soft);
+        transition: color 0.2s;
+      }
+      .pv-a .foot__links a:hover {
+        color: var(--accent);
+      }
+      .pv-a .foot__soon {
+        padding-block: var(--s2);
+        align-self: center;
+      }
+      .pv-a .foot__legal {
+        color: var(--muted);
+        font-size: var(--t-meta);
+      }
+
+      /* ---------- Wider screens ---------- */
+      @media (min-width: 52rem) {
+        .pv-a .entry {
+          grid-template-columns: minmax(0, 5fr) minmax(0, 6fr) minmax(0, 4fr);
+          align-items: baseline;
+        }
+        .pv-a .entry__status {
+          justify-content: flex-end;
+        }
+        .pv-a .post {
+          grid-template-columns: 8rem minmax(0, 1fr) auto;
+          align-items: baseline;
+          padding-inline: var(--s3);
+          margin-inline: calc(var(--s3) * -1);
+        }
+        .pv-a .books {
+          grid-template-columns: minmax(0, 1fr) auto;
+          align-items: end;
+        }
+      }
+      @media (max-width: 40rem) {
+        .pv-a .rain {
+          width: 60%;
+          opacity: 0.6;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        .pv-a * {
+          transition: none !important;
+        }
+      }
+    </style>
+  </body>
+</html>
