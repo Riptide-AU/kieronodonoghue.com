@@ -1,0 +1,258 @@
+---
+/*
+  The site's one signature effect: a portrait reveal.
+
+  The top layer is the black-and-white portrait (a normal optimised image).
+  A canvas on top paints the helmet photo through a soft-edged "window" that
+  follows the pointer and leaves a short fading trail. When the pointer has
+  been still for a moment, the window drifts in a slow figure-eight around
+  the head instead.
+
+  The two photos share the same 1024x1280 frame, so they line up exactly.
+  With "reduce motion" switched on, only the static portrait is shown and
+  the helmet photo is never downloaded.
+*/
+import { Image, getImage } from 'astro:assets';
+import portrait from '../assets/images/hero/portrait-bw.jpg';
+import helmet from '../assets/images/hero/helmet.jpg';
+import { SITE } from '../consts';
+
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+
+// The helmet photo is drawn by the script, so we only need its address.
+const helmetImage = await getImage({ src: helmet, width: 1024, format: 'webp' });
+---
+
+<div class:list={['reveal', className]} data-helmet={helmetImage.src}>
+  <Image
+    src={portrait}
+    alt={SITE.name}
+    widths={[480, 720, 1024]}
+    sizes="(min-width: 52rem) 30rem, 100vw"
+    loading="eager"
+    fetchpriority="high"
+    decoding="async"
+  />
+  <canvas aria-hidden="true"></canvas>
+</div>
+
+<script is:inline>
+  (() => {
+    // ---------- Tunables ----------
+    const REVEAL_RADIUS = 0.26; // size of the window, as a fraction of the portrait's width
+    const TRAIL_FADE = 0.9; // seconds the trail takes to fade away
+    const IDLE_DELAY = 2000; // milliseconds without pointer movement before the idle loop starts
+    const IDLE_SPEED = 0.7; // idle loop speed; one full figure-eight takes about 9 seconds
+    const FOLLOW_EASE = 8; // how quickly the window catches up with the pointer (higher = snappier)
+    // The idle figure-eight, as fractions of the frame: centre, half-width, half-height.
+    const IDLE_PATH = { x: 0.5, y: 0.33, w: 0.2, h: 0.11 };
+
+    const root = document.querySelector('.reveal');
+    const portrait = root && root.querySelector('img');
+    const canvas = root && root.querySelector('canvas');
+    const ctx = canvas && canvas.getContext('2d');
+    if (!ctx || !portrait) return;
+
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+
+    // The mask is drawn small on a hidden canvas (soft shapes don't need
+    // detail), then stretched over the visible one.
+    const mask = document.createElement('canvas');
+    const mctx = mask.getContext('2d');
+
+    // One soft white blob, drawn once and reused for every stamp.
+    const blob = document.createElement('canvas');
+    blob.width = blob.height = 128;
+    const bctx = blob.getContext('2d');
+    const soft = bctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    soft.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    soft.addColorStop(0.45, 'rgba(255, 255, 255, 0.8)');
+    soft.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    bctx.fillStyle = soft;
+    bctx.fillRect(0, 0, 128, 128);
+
+    let helmet = null; // the helmet photo, once it has loaded
+    let width = 0; // size of the portrait on screen, in CSS pixels
+    let height = 0;
+    let inView = false;
+    let raf = 0;
+    let last = 0;
+
+    // Positions are fractions of the frame (0 to 1), so they survive a resize.
+    let pointer = null; // where the pointer last was, or null if it never moved
+    let lastMove = performance.now();
+    let pos = null; // where the window is now
+    let idleMix = 0; // 0 = following the pointer, 1 = fully on the idle loop
+    let idleAngle = 0; // how far along the figure-eight we are
+    let strength = 0; // fades the window in the first time it appears
+    let trail = []; // recent positions: { x, y, born, seed }
+
+    function resize() {
+      const box = root.getBoundingClientRect();
+      width = box.width;
+      height = box.height;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(1, Math.round(width * dpr));
+      canvas.height = Math.max(1, Math.round(height * dpr));
+      mask.width = Math.max(1, Math.round(width / 2));
+      mask.height = Math.max(1, Math.round(height / 2));
+    }
+
+    // Stamp one soft shape onto the mask. Two smaller blobs orbit the main
+    // one so the edge wobbles instead of being a perfect circle.
+    function stamp(x, y, alpha, seed, time) {
+      const r = REVEAL_RADIUS * mask.width;
+      const cx = x * mask.width;
+      const cy = y * mask.height;
+      mctx.globalAlpha = alpha;
+      mctx.drawImage(blob, cx - r, cy - r, r * 2, r * 2);
+      mctx.globalAlpha = alpha * 0.8;
+      for (let i = 0; i < 2; i++) {
+        const angle = seed + time * 0.6 + i * 2.4;
+        const sr = r * (0.62 + 0.12 * Math.sin(seed * 3 + time + i));
+        const sx = cx + Math.cos(angle) * r * 0.5;
+        const sy = cy + Math.sin(angle) * r * 0.5;
+        mctx.drawImage(blob, sx - sr, sy - sr, sr * 2, sr * 2);
+      }
+    }
+
+    function frame(now) {
+      raf = requestAnimationFrame(frame);
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      const time = now / 1000;
+
+      // Ease between "follow the pointer" and "idle loop".
+      const wantIdle = now - lastMove > IDLE_DELAY;
+      idleMix += ((wantIdle ? 1 : 0) - idleMix) * (1 - Math.exp(-dt * 3));
+      idleAngle += dt * IDLE_SPEED * idleMix;
+      const idle = {
+        x: IDLE_PATH.x + IDLE_PATH.w * Math.sin(idleAngle),
+        y: IDLE_PATH.y + IDLE_PATH.h * Math.sin(idleAngle * 2),
+      };
+      const target = pointer
+        ? {
+            x: pointer.x + (idle.x - pointer.x) * idleMix,
+            y: pointer.y + (idle.y - pointer.y) * idleMix,
+          }
+        : idle;
+
+      // Nothing shows until the pointer moves or the first idle loop starts.
+      const active = pointer !== null || wantIdle;
+      if (active) {
+        if (!pos) pos = { x: target.x, y: target.y };
+        const ease = 1 - Math.exp(-dt * FOLLOW_EASE);
+        pos.x += (target.x - pos.x) * ease;
+        pos.y += (target.y - pos.y) * ease;
+        strength += (1 - strength) * (1 - Math.exp(-dt * 4));
+
+        // Drop trail points behind the window as it travels.
+        const prev = trail[trail.length - 1];
+        const gap = REVEAL_RADIUS * 0.25;
+        if (!prev || Math.hypot(pos.x - prev.x, pos.y - prev.y) > gap) {
+          trail.push({ x: pos.x, y: pos.y, born: time, seed: Math.random() * 6.28 });
+        }
+      }
+      trail = trail.filter((p) => time - p.born < TRAIL_FADE);
+
+      // 1. Build the mask: fading trail first, then the window itself.
+      mctx.globalCompositeOperation = 'source-over';
+      mctx.clearRect(0, 0, mask.width, mask.height);
+      mctx.globalCompositeOperation = 'lighter';
+      for (const p of trail) {
+        const life = 1 - (time - p.born) / TRAIL_FADE;
+        stamp(p.x, p.y, life * life * strength, p.seed, time);
+      }
+      if (pos) stamp(pos.x, pos.y, strength, 1, time);
+
+      // 2. Paint the helmet photo only where the mask is.
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(mask, 0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = 'source-in';
+      ctx.drawImage(helmet, 0, 0, canvas.width, canvas.height);
+    }
+
+    // Run only when it is worth it: photo loaded, hero on screen, tab
+    // visible, and the visitor hasn't asked for reduced motion.
+    function update() {
+      cancelAnimationFrame(raf);
+      raf = 0;
+      if (reduce.matches) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+      if (!helmet) return loadHelmet();
+      if (!inView || document.hidden) return;
+      last = performance.now();
+      raf = requestAnimationFrame(frame);
+    }
+
+    // Fetch the helmet photo only after the portrait has finished loading.
+    let loading = false;
+    function loadHelmet() {
+      if (loading) return;
+      loading = true;
+      const start = () => {
+        const img = new Image();
+        img.onload = () => {
+          helmet = img;
+          lastMove = performance.now(); // start the idle countdown from here
+          update();
+        };
+        img.src = root.dataset.helmet;
+      };
+      if (portrait.complete) start();
+      else portrait.addEventListener('load', start, { once: true });
+    }
+
+    function onPointer(event) {
+      const box = root.getBoundingClientRect();
+      pointer = {
+        x: (event.clientX - box.left) / box.width,
+        y: (event.clientY - box.top) / box.height,
+      };
+      lastMove = performance.now();
+    }
+    root.addEventListener('pointermove', onPointer);
+    root.addEventListener('pointerdown', onPointer);
+
+    new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
+      update();
+    }).observe(root);
+    new ResizeObserver(resize).observe(root);
+    document.addEventListener('visibilitychange', update);
+    reduce.addEventListener('change', update);
+
+    resize();
+    update();
+  })();
+</script>
+
+<style>
+  .reveal {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    /* Lets a sideways drag move the window on touch screens, while an
+       up-and-down swipe still scrolls the page. */
+    touch-action: pan-y;
+    /* Feather every edge into the page background, so there is no visible
+       rectangle around the photo. */
+    mask-image:
+      linear-gradient(to right, transparent, #000 20%, #000 80%, transparent),
+      linear-gradient(to bottom, transparent, #000 10%, #000 72%, transparent);
+    mask-composite: intersect;
+  }
+  .reveal :global(img),
+  .reveal canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+</style>
