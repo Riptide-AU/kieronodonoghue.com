@@ -16,35 +16,28 @@ export const SITE = {
 } as const;
 
 /**
- * Animated background ("living knowledge network").
- * Settings flag so the effect can be turned on/off and the variant chosen.
- * Variants: 'grid' (animated data grid), 'network' (drifting node graph),
- * 'streams' (abstract matrix-inspired information streams), 'vertical-streams'
- * (more active, layered vertical data rain).
- * The effect always yields to prefers-reduced-motion. For quick comparison
- * you can also override the variant per-page with
- * ?bg=grid|network|streams|vertical-streams.
+ * Primary navigation. Order matters.
+ * "Building" points at /projects/ until the Building section is created
+ * (step 5 of the redesign), when it becomes /building/.
  */
-export const BACKGROUND = {
-  enabled: true,
-  variant: 'vertical-streams' as
-    | 'grid'
-    | 'network'
-    | 'streams'
-    | 'vertical-streams',
-} as const;
-
-/** Primary navigation. Order matters. */
 export const NAV = [
   { label: 'Home', href: '/' },
-  { label: 'About', href: '/about/' },
-  { label: 'Work', href: '/work/' },
-  { label: 'Projects', href: '/projects/' },
+  { label: 'Building', href: '/projects/' },
   { label: 'Writing', href: '/writing/' },
-  { label: 'Ideas', href: '/ideas/' },
   { label: 'Books', href: '/books/' },
-  { label: 'Links', href: '/links/' },
+  { label: 'About', href: '/about/' },
 ] as const;
+
+/**
+ * Riptide Digital, Kieron's app business.
+ * While `live` is false the site shows "coming soon" instead of a link.
+ * Set it to true once riptidedigital.com.au is up.
+ */
+export const RIPTIDE = {
+  name: 'Riptide Digital',
+  url: 'https://riptidedigital.com.au',
+  live: false,
+} as const;
 
 export const CONTACT_EMAIL = 'kieron_o@outlook.com';
 
