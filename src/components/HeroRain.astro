@@ -1,0 +1,122 @@
+---
+/*
+  The site's one signature motion: a quiet data rain.
+  Thin, slow green lines that fall behind the right-hand side of the home
+  hero. It only runs while the hero is on screen and the tab is visible.
+  Under "reduce motion" it draws one still frame and never animates.
+
+  Place it inside a parent that has `position: relative`; it fills the
+  right-hand part of that parent and sits behind the content.
+*/
+---
+
+<canvas class="hero-rain" aria-hidden="true"></canvas>
+
+<script is:inline>
+  (() => {
+    const canvas = document.querySelector('.hero-rain');
+    const ctx = canvas && canvas.getContext('2d');
+    if (!ctx) return;
+
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+    let w = 0;
+    let h = 0;
+    let drops = [];
+    let raf = 0;
+    let last = 0;
+    let onScreen = true;
+
+    const newDrop = (x, y) => ({
+      x,
+      y,
+      len: 30 + Math.random() * 90,
+      speed: 12 + Math.random() * 26, // pixels per second: slow
+      alpha: 0.18 + Math.random() * 0.37,
+    });
+
+    // Size the canvas to its box and scatter one drop per ~30px of width.
+    function setup() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const box = canvas.getBoundingClientRect();
+      w = box.width;
+      h = box.height;
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const count = Math.max(6, Math.floor(w / 30));
+      drops = Array.from({ length: count }, (_, i) =>
+        newDrop(Math.round(((i + Math.random()) * w) / count), Math.random() * h),
+      );
+    }
+
+    // Move each drop down a little and draw it as a line that fades upwards.
+    function draw(dt) {
+      ctx.clearRect(0, 0, w, h);
+      for (const d of drops) {
+        d.y += d.speed * dt;
+        if (d.y - d.len > h) Object.assign(d, newDrop(d.x, -Math.random() * 80));
+        const fade = ctx.createLinearGradient(0, d.y - d.len, 0, d.y);
+        fade.addColorStop(0, 'rgba(61, 252, 140, 0)'); // --color-accent
+        fade.addColorStop(1, 'rgba(61, 252, 140, ' + d.alpha + ')');
+        ctx.fillStyle = fade;
+        ctx.fillRect(d.x, d.y - d.len, 1, d.len);
+      }
+    }
+
+    function loop(t) {
+      raf = requestAnimationFrame(loop);
+      const dt = Math.min((t - last) / 1000, 0.05);
+      last = t;
+      draw(dt);
+    }
+
+    function start() {
+      cancelAnimationFrame(raf);
+      if (reduce.matches) return draw(0); // one still frame
+      if (!onScreen || document.hidden) return;
+      last = performance.now();
+      raf = requestAnimationFrame(loop);
+    }
+
+    setup();
+    start();
+
+    new IntersectionObserver(([entry]) => {
+      onScreen = entry.isIntersecting;
+      start();
+    }).observe(canvas);
+    document.addEventListener('visibilitychange', start);
+    reduce.addEventListener('change', start);
+
+    let timer = 0;
+    window.addEventListener('resize', () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        setup();
+        start();
+      }, 150);
+    });
+  })();
+</script>
+
+<style>
+  .hero-rain {
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    right: 0;
+    width: 46%;
+    height: 100%;
+    /* Fade out towards the text and at the top and bottom edges */
+    mask-image:
+      linear-gradient(to right, transparent, #000 55%),
+      linear-gradient(to bottom, transparent, #000 20%, #000 75%, transparent);
+    mask-composite: intersect;
+  }
+  @media (max-width: 40rem) {
+    .hero-rain {
+      width: 60%;
+      opacity: 0.6;
+    }
+  }
+</style>

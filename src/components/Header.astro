@@ -10,86 +10,41 @@ const isActive = (href: string) => {
 };
 ---
 
-<header class="border-b border-border/80 bg-base/80 backdrop-blur sticky top-0 z-40">
-  <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-4">
-    <a
-      href="/"
-      class="font-semibold tracking-tight text-ink hover:text-accent transition-colors"
-    >
-      {SITE.name}
-    </a>
+<!--
+  Site header: name on the left, five nav links on the right.
+  On narrow screens the links wrap onto their own row, so there is no menu
+  button and no JavaScript.
+-->
+<header
+  class="wrap flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 py-6"
+>
+  <a
+    href="/"
+    class="font-display text-[0.9375rem] font-semibold text-ink transition-colors hover:text-accent"
+  >
+    {SITE.name}
+  </a>
 
-    <!-- Desktop navigation -->
-    <nav aria-label="Primary" class="hidden md:block">
-      <ul class="flex items-center gap-1">
-        {
-          NAV.map((item) => (
-            <li>
-              <a
-                href={item.href}
-                aria-current={isActive(item.href) ? 'page' : undefined}
-                class:list={[
-                  'rounded-md px-3 py-2 text-sm transition-colors',
-                  isActive(item.href)
-                    ? 'text-accent'
-                    : 'text-muted hover:text-ink',
-                ]}
-              >
-                {item.label}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </nav>
-
-    <!-- Mobile menu (CSS-only via <details>, no JS) -->
-    <details class="md:hidden relative">
-      <summary
-        class="list-none cursor-pointer rounded-md p-2 text-muted hover:text-ink"
-        aria-label="Open navigation menu"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="22"
-          height="22"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          aria-hidden="true"
-        >
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <line x1="3" y1="18" x2="21" y2="18" />
-        </svg>
-      </summary>
-      <nav
-        aria-label="Primary"
-        class="absolute right-0 mt-2 w-48 rounded-lg border border-border bg-surface p-2 shadow-xl"
-      >
-        <ul class="flex flex-col">
-          {
-            NAV.map((item) => (
-              <li>
-                <a
-                  href={item.href}
-                  aria-current={isActive(item.href) ? 'page' : undefined}
-                  class:list={[
-                    'block rounded-md px-3 py-2 text-sm transition-colors',
-                    isActive(item.href)
-                      ? 'text-accent'
-                      : 'text-muted hover:text-ink hover:bg-surface-2',
-                  ]}
-                >
-                  {item.label}
-                </a>
-              </li>
-            ))
-          }
-        </ul>
-      </nav>
-    </details>
-  </div>
+  <nav aria-label="Primary">
+    <ul class="flex flex-wrap gap-x-6 text-[0.9375rem]">
+      {
+        NAV.map((item) => (
+          <li>
+            <a
+              href={item.href}
+              aria-current={isActive(item.href) ? 'page' : undefined}
+              class:list={[
+                'block border-b py-2 transition-colors',
+                isActive(item.href)
+                  ? 'border-accent text-ink'
+                  : 'border-transparent text-muted hover:text-ink',
+              ]}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
 </header>

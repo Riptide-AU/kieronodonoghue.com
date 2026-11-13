@@ -40,7 +40,7 @@ const writing = defineCollection({
         description: z.string(),
         pubDate: z.coerce.date(),
         updatedDate: z.coerce.date().optional(),
-        /** e.g. Business, Analytics, Technology, AI, Learning notes. */
+        /** e.g. Business, Analytics, Technology, AI, Learning notes, Ideas. */
         category: z.string().optional(),
         tags: z.array(z.string()).default([]),
         featured: z.boolean().default(false),
@@ -61,27 +61,17 @@ const projects = defineCollection({
         status: z.string().default('Ongoing'),
         /** Primary date for ordering (start or completion). */
         date: z.coerce.date(),
+        /** Set true when the date is only a rough guess: it still orders the
+         *  list, but is not shown on the page. */
+        hideDate: z.boolean().default(false),
+        /** True for things being built right now. These are listed first on
+         *  the Building page under "Now building". */
+        current: z.boolean().default(false),
+        /** Optional outside link, e.g. the project's own website. */
+        link: z.string().url().optional(),
         tools: z.array(z.string()).default([]),
         tags: z.array(z.string()).default([]),
         featured: z.boolean().default(false),
-        draft: z.boolean().default(false),
-        ...imageFields(image),
-      })
-      .refine(hasAltWhenImage, altRefineOptions),
-});
-
-const ideas = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/ideas' }),
-  schema: ({ image }) =>
-    z
-      .object({
-        title: z.string(),
-        description: z.string(),
-        pubDate: z.coerce.date(),
-        updatedDate: z.coerce.date().optional(),
-        /** Digital-garden maturity, e.g. "Seedling", "Growing", "Evergreen". */
-        stage: z.string().default('Seedling'),
-        tags: z.array(z.string()).default([]),
         draft: z.boolean().default(false),
         ...imageFields(image),
       })
@@ -150,4 +140,4 @@ const books = defineCollection({
     }),
 });
 
-export const collections = { writing, projects, ideas, books };
+export const collections = { writing, projects, books };

@@ -1,0 +1,70 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProjectRow from '../../components/ProjectRow.astro';
+
+// Newest first. Entries marked `current: true` are listed under
+// "Now building"; everything else goes under "Past projects".
+const projects = (await getCollection('projects', (p) => !p.data.draft)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+const current = projects.filter((p) => p.data.current);
+const past = projects.filter((p) => !p.data.current);
+---
+
+<BaseLayout
+  title="Building"
+  description="What Kieron O’Donoghue is building now, including PainTrail and Riptide Digital, plus past projects in analytics, data and process improvement."
+>
+  <section class="page-head wrap">
+    <h1 class="page-title">Building</h1>
+    <p class="lede">
+      The apps and projects I’m working on now, and some of the work that came
+      before them. Each one covers the problem, the approach and what I learned.
+    </p>
+  </section>
+
+  <section class="section wrap">
+    <h2 class="section-title">Now building</h2>
+    <ul class="ledger">
+      {
+        current.map((p) => (
+          <ProjectRow
+            title={p.data.title}
+            href={`/building/${p.id}/`}
+            description={p.data.description}
+            status={p.data.status}
+            active
+          />
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="section wrap">
+    <h2 class="section-title">Past projects</h2>
+    <p class="meta past-note">
+      Work from earlier roles is described in general terms, without naming the
+      organisations involved.
+    </p>
+    <ul class="ledger">
+      {
+        past.map((p) => (
+          <ProjectRow
+            title={p.data.title}
+            href={`/building/${p.id}/`}
+            description={p.data.description}
+            status={p.data.status}
+          />
+        ))
+      }
+    </ul>
+  </section>
+</BaseLayout>
+
+<style>
+  .past-note {
+    max-width: 60ch;
+    margin-block: 1rem 2rem;
+  }
+</style>

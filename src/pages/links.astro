@@ -1,65 +1,94 @@
 ---
+/*
+  A simple "link in bio" page. It is not in the nav, but the address
+  kieronodonoghue.com/links/ is handy to share on social profiles.
+*/
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { SOCIAL_LINKS, CONTACT_EMAIL } from '../consts';
+import { SITE, SOCIAL_LINKS, RIPTIDE } from '../consts';
 
 // Short descriptions per link so the page reads as more than a list of URLs.
-const descriptions: Record<string, string> = {
+const notes: Record<string, string> = {
   LinkedIn: 'Professional profile and work history.',
   Facebook: 'Personal profile.',
-  GitHub: 'Code, projects, and experiments.',
+  GitHub: 'Code, projects and experiments.',
   Amazon: 'My books, including the Soul War Saga.',
-  Goodreads: 'Goodreads profile containing my books, reviews, and reading activity.',
+  Goodreads: 'My books, reviews and reading.',
   Email: 'The best way to get in touch directly.',
 };
+
+const links = [
+  { label: RIPTIDE.name, href: RIPTIDE.aboutUrl, note: 'My app studio.' },
+  { label: 'Building', href: '/building/', note: 'What I’m working on now.' },
+  { label: 'Writing', href: '/writing/', note: 'Articles, notes and ideas.' },
+  { label: 'Books', href: '/books/', note: 'The Soul War Saga.' },
+  ...SOCIAL_LINKS.map((l) => ({ ...l, note: notes[l.label] ?? '' })),
+];
 ---
 
 <BaseLayout
   title="Links"
-  description="Find Kieron O'Donoghue online — LinkedIn, GitHub, Amazon, Goodreads, Facebook, and email."
+  description="Find Kieron O’Donoghue online: Riptide Digital, LinkedIn, GitHub, Amazon, Goodreads, Facebook and email."
 >
-  <section class="mx-auto max-w-prose px-5 py-16">
-    <h1 class="text-3xl font-bold tracking-tight text-ink md:text-4xl">Links</h1>
-    <p class="mt-4 text-lg text-muted">
-      The main ways to find me online and get in touch.
-    </p>
+  <section class="page-head wrap">
+    <h1 class="page-title">{SITE.name}</h1>
+    <p class="lede">The main places to find me online and get in touch.</p>
+  </section>
 
-    <ul class="mt-10 flex flex-col gap-3">
+  <section class="section wrap">
+    <ul class="ledger">
       {
-        SOCIAL_LINKS.map((link) => (
-          <li>
-            <a
-              href={link.href}
-              class="group flex items-center justify-between rounded-xl border border-border bg-surface p-5 transition-colors hover:border-accent/60 hover:bg-surface-2"
-              {...link.href.startsWith('http')
-                ? { target: '_blank', rel: 'me noopener noreferrer' }
-                : {}}
-            >
-              <span>
-                <span class="block font-semibold text-ink">{link.label}</span>
-                <span class="mt-1 block text-sm text-muted">
-                  {descriptions[link.label] ?? ''}
-                </span>
-              </span>
-              <span
-                class="text-muted transition-colors group-hover:text-accent"
-                aria-hidden="true"
+        links.map((link) => (
+          <li class="row">
+            <h2>
+              <a
+                href={link.href}
+                {...(link.href === RIPTIDE.aboutUrl
+                  ? { rel: 'me' }
+                  : link.href.startsWith('http')
+                    ? { target: '_blank', rel: 'me noopener noreferrer' }
+                    : {})}
               >
-                →
-              </span>
-            </a>
+                {link.label}
+              </a>
+            </h2>
+            <p>{link.note}</p>
           </li>
         ))
       }
     </ul>
-
-    <p class="mt-8 text-sm text-muted">
-      You can also email me directly at
-      <a
-        href={`mailto:${CONTACT_EMAIL}`}
-        class="text-accent hover:text-accent-strong"
-      >
-        {CONTACT_EMAIL}</a
-      >.
-    </p>
   </section>
 </BaseLayout>
+
+<style>
+  .row {
+    position: relative;
+    transition: background-color 0.2s;
+  }
+  .row:hover {
+    background: var(--color-surface);
+  }
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  /* Stretch the link over the whole row */
+  .row a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+  .row:hover a {
+    text-decoration: underline;
+    text-decoration-color: var(--color-accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 5px;
+  }
+  @media (min-width: 52rem) {
+    .row {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 10fr);
+      align-items: baseline;
+      padding-inline: 0.75rem;
+      margin-inline: -0.75rem;
+    }
+  }
+</style>

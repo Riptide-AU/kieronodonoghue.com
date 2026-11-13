@@ -3,7 +3,10 @@ import { SITE } from '../consts';
 import SEO from '../components/SEO.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import AnimatedBackground from '../components/AnimatedBackground.astro';
+// Self-hosted variable font: served from this site, so visitors' browsers
+// never contact Google or any other font service. This file includes the
+// width axis, which the wide headings need.
+import '@fontsource-variable/archivo/wdth.css';
 import '../styles/global.css';
 
 interface Props {
@@ -15,11 +18,9 @@ interface Props {
   publishedDate?: Date;
   modifiedDate?: Date;
   noindex?: boolean;
-  /** Colour profile for the animated background ('default' | 'books'). */
-  backgroundTheme?: 'default' | 'books';
 }
 
-const { backgroundTheme = 'default', ...seoProps } = Astro.props;
+const seoProps = Astro.props;
 ---
 
 <!doctype html>
@@ -35,12 +36,37 @@ const { backgroundTheme = 'default', ...seoProps } = Astro.props;
     <SEO {...seoProps} />
   </head>
   <body class="flex min-h-screen flex-col">
-    <AnimatedBackground theme={backgroundTheme} />
     <a href="#main" class="skip-link">Skip to content</a>
     <Header />
     <main id="main" class="flex-1">
       <slot />
     </main>
     <Footer />
+
+    <!-- Scroll reveal: adds data-reveal="in" as elements enter the viewport.
+         Fully skipped under reduced motion (elements stay visible via CSS). -->
+    <script is:inline>
+      (() => {
+        const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+        const items = document.querySelectorAll('[data-reveal]');
+        if (!items.length) return;
+        if (reduce.matches || !('IntersectionObserver' in window)) {
+          items.forEach((el) => el.setAttribute('data-reveal', 'in'));
+          return;
+        }
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.setAttribute('data-reveal', 'in');
+                io.unobserve(entry.target);
+              }
+            });
+          },
+          { rootMargin: '0px 0px -10% 0px', threshold: 0.1 },
+        );
+        items.forEach((el) => io.observe(el));
+      })();
+    </script>
   </body>
 </html>

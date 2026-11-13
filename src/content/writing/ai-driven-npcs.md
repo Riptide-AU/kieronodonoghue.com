@@ -2,7 +2,7 @@
 title: "AI-Driven NPCs in Persistent Online Worlds"
 description: "Exploring whether AI could power NPCs that live in a persistent world — forming memories, relationships, and stories of their own."
 pubDate: 2026-05-22
-stage: "Seedling"
+category: "Ideas"
 tags: ["AI", "Game design"]
 ---
 

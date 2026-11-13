@@ -1,0 +1,145 @@
+---
+import { getCollection, render } from 'astro:content';
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import FeatureImage from '../../components/FeatureImage.astro';
+import ProjectRow from '../../components/ProjectRow.astro';
+
+export const getStaticPaths = (async () => {
+  const projects = await getCollection('projects', (p) => !p.data.draft);
+  return projects.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}) satisfies GetStaticPaths;
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const dateLabel = new Intl.DateTimeFormat('en-AU', {
+  year: 'numeric',
+  month: 'long',
+}).format(entry.data.date);
+
+// Up to two other projects that share a tag with this one.
+const tagSet = new Set(entry.data.tags);
+const related = (await getCollection('projects', (p) => !p.data.draft))
+  .filter((p) => p.id !== entry.id && p.data.tags.some((t) => tagSet.has(t)))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 2);
+---
+
+<BaseLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  type="article"
+  publishedDate={entry.data.date}
+  image={entry.data.heroImage?.src}
+>
+  <article>
+    <header class="page-head wrap">
+      <a href="/building/" class="back-link">Back to Building</a>
+      <h1 class="page-title">{entry.data.title}</h1>
+      <p class="lede">{entry.data.description}</p>
+
+      <!-- Key facts in one line, instead of a boxed side panel -->
+      <dl class="facts">
+        <div>
+          <dt>Status</dt>
+          <dd>{entry.data.status}</dd>
+        </div>
+        {
+          !entry.data.hideDate && (
+            <div>
+              <dt>Date</dt>
+              <dd>{dateLabel}</dd>
+            </div>
+          )
+        }
+        {
+          entry.data.tools.length > 0 && (
+            <div>
+              <dt>Tools</dt>
+              <dd>{entry.data.tools.join(', ')}</dd>
+            </div>
+          )
+        }
+        {
+          entry.data.link && (
+            <div>
+              <dt>Website</dt>
+              <dd>
+                <a class="link-more" href={entry.data.link}>
+                  {new URL(entry.data.link).hostname}
+                </a>
+              </dd>
+            </div>
+          )
+        }
+      </dl>
+
+      {
+        entry.data.heroImage && (
+          <div class="mt-10">
+            <FeatureImage
+              src={entry.data.heroImage}
+              alt={entry.data.heroImageAlt ?? entry.data.title}
+              class="aspect-[21/9]"
+              loading="eager"
+              sizes="(min-width: 1024px) 64rem, 100vw"
+            />
+          </div>
+        )
+      }
+    </header>
+
+    <div class="wrap body">
+      <div class="prose">
+        <Content />
+      </div>
+    </div>
+  </article>
+
+  {
+    related.length > 0 && (
+      <section class="section wrap">
+        <h2 class="section-title">Related</h2>
+        <ul class="ledger">
+          {related.map((p) => (
+            <ProjectRow
+              title={p.data.title}
+              href={`/building/${p.id}/`}
+              description={p.data.description}
+              status={p.data.status}
+              active={p.data.current}
+            />
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 3rem;
+    margin-top: 2.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
+    font-size: 0.9375rem;
+  }
+  .facts dt {
+    color: var(--color-muted);
+  }
+  .facts dd {
+    color: var(--color-ink);
+  }
+  .body {
+    padding-block: 1.5rem 3rem;
+  }
+  .prose {
+    max-width: 44rem;
+  }
+</style>

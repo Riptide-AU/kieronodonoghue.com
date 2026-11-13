@@ -6,6 +6,7 @@ date: 2026-05-01
 tools: ["Astro", "TypeScript", "Tailwind CSS", "MDX"]
 tags: ["Web development", "Personal projects"]
 featured: true
+current: true
 ---
 
 ## Overview

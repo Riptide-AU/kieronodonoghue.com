@@ -3,294 +3,441 @@ import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import vulcan from '../assets/images/vulcan.png';
 import sailing from '../assets/images/sailing.png';
+import { SOCIAL_LINKS, RIPTIDE } from '../consts';
 
-// Small structured data keeps the template readable and easy to edit later.
+// Small lists of content keep the page below readable and easy to edit.
+
+// The quick-facts panel at the top of the page.
 const atAGlance = [
-  { label: 'Role', value: 'Corporate Services Analyst' },
-  { label: 'Field', value: 'Construction industry' },
+  { label: 'Role', value: 'Business Analyst' },
+  { label: 'Field', value: 'Data & Finance Infrastructure' },
   { label: 'Based in', value: 'Australia' },
+  { label: 'Education', value: 'B.Business Analytics' },
   { label: 'Studying', value: 'B.Commerce (Accounting)' },
 ];
 
-const currentFocus = [
+const background = [
   {
-    title: 'Business systems & process improvement',
-    body: 'Making the systems behind day-to-day operations more reliable and less manual.',
+    title: 'Business analytics',
+    body: 'I hold a Bachelor of Business Analytics. It is the foundation for how I read and work with data.',
   },
   {
-    title: 'Analytics & reporting',
-    body: 'Turning operational and financial data into reporting people can actually use.',
+    title: 'Business analyst work',
+    body: 'Years of hands-on work with business systems, reporting, data cleansing and process improvement, in industries including construction, wholesale and health.',
   },
   {
-    title: 'Building & learning',
-    body: 'Developing practical coding skills through real projects, including this site.',
+    title: 'Accounting',
+    body: 'I am studying a Bachelor of Commerce (Accounting) to deepen the commercial side: the systems and rules behind the numbers.',
+  },
+  {
+    title: 'Building in public',
+    body: 'I started Riptide Digital to build my own apps, and I write here about what I learn along the way.',
   },
 ];
 
-const education = [
+// How I approach a piece of work, in order.
+const approach = [
   {
-    qualification: 'Business Analytics',
-    detail: 'Graduate. The foundation for how I read and work with data.',
+    title: 'Understand it first',
+    body: 'I map how a process actually works before changing anything. Most of the value is in understanding it properly.',
   },
   {
-    qualification: 'Bachelor of Commerce (Accounting)',
-    detail: 'In progress. The systems and rules behind the numbers.',
+    title: 'Simplify, then automate',
+    body: 'A messy process automated is just a faster mess. I simplify first, then automate what remains.',
+  },
+  {
+    title: 'Build in checks',
+    body: 'I add simple validation so a workflow flags obvious problems instead of passing them through silently.',
+  },
+  {
+    title: 'Keep it maintainable',
+    body: 'I favour solutions that someone else, or future me, can still understand and trust later.',
   },
 ];
 
 const learning = [
-  { name: 'Python', note: 'Automation and analysis' },
-  { name: 'SQL', note: 'Querying and shaping data' },
-  { name: 'JavaScript', note: 'Web application work' },
-  { name: 'CSS', note: 'Layout and interface' },
+  { title: 'Flutter', body: 'Building apps for Android and iPhone' },
+  { title: 'Python', body: 'Automation and analysis' },
+  { title: 'SQL', body: 'Querying and shaping data' },
+  { title: 'JavaScript', body: 'Web application work' },
+  { title: 'CSS', body: 'Layout and interface' },
 ];
 
 const interests = [
   'Business analytics',
   'Process improvement',
   'Automation',
-  'Accounting & commercial systems',
-  'The construction industry',
+  'Accounting and commercial systems',
   'AI',
-  'Web development',
+  'App and web development',
+  'Writing fiction',
   'Game design',
-  'Boats, motorcycles & practical DIY',
+  'Boats, motorcycles and practical DIY',
 ];
 
-// "Beyond work" — personal interests. Authentic and light on detail by design.
-const beyond = [
-  {
-    title: 'Motorcycles',
-    image: vulcan,
-    alt: 'Stylised artwork of a motorcycle',
-    body: 'I enjoy riding and tinkering with motorcycles — practical, mechanical, and a good reason to work with my hands.',
-  },
-  {
-    title: 'Sailing & boats',
-    image: sailing,
-    alt: 'Stylised artwork of a sailing boat on the water',
-    body: 'Time on the water is my reset. Boats are another kind of system to understand, maintain, and get right.',
-  },
-  {
-    title: 'Technology & projects',
-    image: null,
-    alt: '',
-    body: 'Building things for the fun of it — code, automation, and side projects that double as a way to keep learning.',
-  },
-];
-
-const timeline = [
-  {
-    title: 'Studied business analytics',
-    body: 'Learned to work with data as a way of understanding how organisations actually operate.',
-  },
-  {
-    title: 'Moved into corporate services',
-    body: 'Started applying analytics, accounting, and systems thinking to real operational work in the construction industry.',
-  },
-  {
-    title: 'Studying accounting',
-    body: 'Began a Bachelor of Commerce in Accounting to deepen the commercial side of that work.',
-  },
-  {
-    title: 'Building and writing in public',
-    body: 'Started developing my coding skills through practical projects and writing about what I learn — including this site.',
-  },
-];
+// Short descriptions for the links at the bottom of the page.
+const linkNotes: Record<string, string> = {
+  LinkedIn: 'Professional profile and work history.',
+  Facebook: 'Personal profile.',
+  GitHub: 'Code, projects and experiments.',
+  Amazon: 'My books, including the Soul War Saga.',
+  Goodreads: 'My books, reviews and reading.',
+  Email: 'The best way to get in touch directly.',
+};
 ---
 
 <BaseLayout
   title="About"
-  description="About Kieron O'Donoghue — a Corporate Services Analyst, Business Analytics graduate, and Bachelor of Commerce (Accounting) student based in Australia."
+  description="About Kieron O’Donoghue: a business analyst who builds apps, tools and systems, runs Riptide Digital, and writes fiction."
 >
-  <!-- INTRO / HERO -->
-  <section class="mx-auto max-w-5xl px-5 pt-16 pb-10 md:pt-24">
-    <p class="text-xs font-semibold uppercase tracking-wider text-accent">About</p>
-    <div class="mt-3 grid gap-10 md:grid-cols-[1.6fr_1fr] md:items-start">
-      <div>
-        <h1 class="text-3xl font-bold tracking-tight text-ink md:text-4xl">
-          I'm Kieron O'Donoghue.
-        </h1>
-        <p class="mt-5 text-lg leading-relaxed text-muted">
-          I work at the intersection of business, technology, analytics, and
-          accounting. I like understanding how things actually work — then making
-          them work better. This site is where I keep that work, write about what
-          I'm learning, and think out loud about ideas.
-        </p>
-      </div>
-
-      <!-- At-a-glance panel -->
-      <dl class="rounded-2xl border border-border bg-surface p-6">
-        {
-          atAGlance.map((item) => (
-            <div class="flex justify-between gap-4 border-b border-border/70 py-3 first:pt-0 last:border-0 last:pb-0">
-              <dt class="text-sm text-muted">{item.label}</dt>
-              <dd class="text-sm font-medium text-ink text-right">
-                {item.value}
-              </dd>
-            </div>
-          ))
-        }
-      </dl>
+  <!-- INTRO -->
+  <section class="page-head wrap intro">
+    <div>
+      <h1 class="page-title">I’m Kieron O’Donoghue.</h1>
+      <p class="lede">
+        I’m a business analyst who builds things: apps, tools and systems that
+        solve practical problems. I run Riptide Digital, where I’m building
+        PainTrail, a pain diary app. I also write fiction.
+      </p>
     </div>
+
+    <dl class="glance">
+      {
+        atAGlance.map((item) => (
+          <div>
+            <dt>{item.label}</dt>
+            <dd>{item.value}</dd>
+          </div>
+        ))
+      }
+    </dl>
   </section>
 
   <!-- WHO I AM -->
-  <section class="mx-auto max-w-5xl px-5 py-10">
-    <div class="grid gap-8 md:grid-cols-[220px_1fr] md:items-baseline">
-      <h2 class="text-2xl font-semibold tracking-tight text-ink">Who I am</h2>
-      <div class="space-y-4 text-lg leading-relaxed text-ink/90">
-        <p>
-          I'm a practical, curious, analytical person. I'm more interested in
-          building systems that work than in talking about them, and I'd rather
-          be honest about what I'm still learning than overstate what I know.
-        </p>
-        <p>
-          Most of what I do comes back to the same instinct: take something messy
-          or repetitive, understand it properly, and make it simpler and more
-          reliable.
-        </p>
-      </div>
+  <section class="section wrap split">
+    <h2 class="section-title">Who I am</h2>
+    <div class="text">
+      <p>
+        I’m a practical, curious, analytical person. I’m more interested in
+        building systems that work than in talking about them, and I’d rather
+        be honest about what I’m still learning than overstate what I know.
+      </p>
+      <p>
+        Most of what I do comes back to the same instinct: take something messy
+        or repetitive, understand it properly, and make it simpler and more
+        reliable.
+      </p>
     </div>
   </section>
 
-  <!-- CURRENT FOCUS -->
-  <section class="mx-auto max-w-5xl px-5 py-10">
-    <h2 class="text-2xl font-semibold tracking-tight text-ink">Current focus</h2>
-    <div class="mt-6 grid gap-4 sm:grid-cols-3">
-      {
-        currentFocus.map((item) => (
-          <div class="rounded-xl border border-border bg-surface p-5">
-            <h3 class="font-semibold text-ink">{item.title}</h3>
-            <p class="mt-2 text-sm leading-relaxed text-muted">{item.body}</p>
-          </div>
-        ))
-      }
+  <!-- WHAT I'M BUILDING -->
+  <section class="section wrap split">
+    <h2 class="section-title">What I’m building</h2>
+    <div class="text">
+      <p>
+        My main project is <a href="/building/paintrail/">PainTrail</a>, a pain
+        diary app that is quick to fill in, works offline and keeps your
+        entries on your own phone. It is the first app from
+        <a href={RIPTIDE.url}>{RIPTIDE.name}</a>, my independent app studio.
+      </p>
+      <p>
+        <a class="link-more" href="/building/">See everything I’m building</a>
+      </p>
     </div>
   </section>
 
-  <!-- EDUCATION -->
-  <section class="mx-auto max-w-5xl px-5 py-10">
-    <h2 class="text-2xl font-semibold tracking-tight text-ink">Education</h2>
-    <div class="mt-6 grid gap-4 sm:grid-cols-2">
+  <!-- BACKGROUND -->
+  <section class="section wrap">
+    <h2 class="section-title">Background</h2>
+    <ul class="ledger">
       {
-        education.map((item) => (
-          <div class="rounded-xl border border-border bg-surface p-5">
-            <h3 class="font-semibold text-ink">{item.qualification}</h3>
-            <p class="mt-2 text-sm leading-relaxed text-muted">{item.detail}</p>
-          </div>
-        ))
-      }
-    </div>
-  </section>
-
-  <!-- AREAS I'M LEARNING -->
-  <section class="mx-auto max-w-5xl px-5 py-10">
-    <h2 class="text-2xl font-semibold tracking-tight text-ink">
-      Areas I'm learning
-    </h2>
-    <p class="mt-3 max-w-2xl text-muted">
-      I'm developing these through practical work and personal projects — learning
-      as I build, not claiming to be an expert.
-    </p>
-    <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      {
-        learning.map((item) => (
-          <div class="rounded-xl border border-border bg-surface-2 p-4">
-            <p class="font-mono text-sm font-semibold text-accent">{item.name}</p>
-            <p class="mt-1 text-sm text-muted">{item.note}</p>
-          </div>
-        ))
-      }
-    </div>
-  </section>
-
-  <!-- INTERESTS -->
-  <section class="mx-auto max-w-5xl px-5 py-10">
-    <h2 class="text-2xl font-semibold tracking-tight text-ink">Interests</h2>
-    <ul class="mt-6 flex flex-wrap gap-2">
-      {
-        interests.map((interest) => (
-          <li class="rounded-full border border-border bg-surface px-3 py-1.5 text-sm text-ink/90">
-            {interest}
+        background.map((item) => (
+          <li class="pair">
+            <h3>{item.title}</h3>
+            <p>{item.body}</p>
           </li>
         ))
       }
     </ul>
   </section>
 
-  <!-- BEYOND WORK -->
-  <section class="mx-auto max-w-5xl px-5 py-10">
-    <h2 class="text-2xl font-semibold tracking-tight text-ink">Beyond work</h2>
-    <p class="mt-3 max-w-2xl text-muted">
-      There's more to me than the professional side. A few of the things I spend
-      time on away from the desk.
-    </p>
-    <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  <!-- HOW I WORK -->
+  <section class="section wrap">
+    <h2 class="section-title">How I work</h2>
+    <ol class="ledger">
       {
-        beyond.map((item) => (
-          <article class="flex flex-col overflow-hidden rounded-xl border border-border bg-surface">
-            {item.image ? (
-              <div class="aspect-[3/2] overflow-hidden border-b border-border">
-                <Image
-                  src={item.image}
-                  alt={item.alt}
-                  widths={[320, 640, 960]}
-                  sizes="(min-width: 1024px) 20rem, (min-width: 640px) 50vw, 100vw"
-                  loading="lazy"
-                  decoding="async"
-                  class="h-full w-full object-cover"
-                />
-              </div>
-            ) : (
-              <div
-                class="flex aspect-[3/2] items-center justify-center border-b border-border bg-accent-soft"
-                aria-hidden="true"
-              >
-                <span class="font-mono text-sm text-accent">&lt;/&gt;</span>
-              </div>
-            )}
-            <div class="flex flex-1 flex-col p-5">
-              <h3 class="font-semibold text-ink">{item.title}</h3>
-              <p class="mt-2 text-sm leading-relaxed text-muted">{item.body}</p>
-            </div>
-          </article>
-        ))
-      }
-    </div>
-  </section>
-
-  <!-- PERSONAL PHILOSOPHY (callout) -->
-  <section class="mx-auto max-w-5xl px-5 py-10">
-    <blockquote
-      class="rounded-2xl border border-accent/30 bg-accent-soft p-8 md:p-10"
-    >
-      <p class="text-xl font-medium leading-relaxed text-ink md:text-2xl">
-        “Understand the process before you try to improve it. Automating a messy
-        routine just produces a faster mess.”
-      </p>
-      <footer class="mt-4 text-sm text-muted">
-        A principle that shapes most of how I work.
-      </footer>
-    </blockquote>
-  </section>
-
-  <!-- JOURNEY / TIMELINE -->
-  <section class="mx-auto max-w-5xl px-5 py-10 pb-16">
-    <h2 class="text-2xl font-semibold tracking-tight text-ink">Journey</h2>
-    <ol class="mt-8 border-l border-border">
-      {
-        timeline.map((item) => (
-          <li class="relative pl-8 pb-8 last:pb-0">
-            <span
-              class="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full border-2 border-accent bg-base"
-              aria-hidden="true"
-            />
-            <h3 class="font-semibold text-ink">{item.title}</h3>
-            <p class="mt-1 text-muted">{item.body}</p>
+        approach.map((item) => (
+          <li class="pair">
+            <h3>{item.title}</h3>
+            <p>{item.body}</p>
           </li>
         ))
       }
     </ol>
   </section>
+
+  <!-- LEARNING AND INTERESTS -->
+  <section class="section wrap">
+    <h2 class="section-title">What I’m learning</h2>
+    <p class="meta note">
+      I’m developing these through real projects: learning as I build, not
+      claiming to be an expert.
+    </p>
+    <ul class="ledger">
+      {
+        learning.map((item) => (
+          <li class="pair">
+            <h3>{item.title}</h3>
+            <p>{item.body}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="section wrap split">
+    <h2 class="section-title">Interests</h2>
+    <p class="text">{interests.join(' · ')}</p>
+  </section>
+
+  <!-- BEYOND WORK -->
+  <section class="section wrap">
+    <h2 class="section-title">Beyond work</h2>
+    <div class="beyond">
+      <article>
+        <Image
+          src={vulcan}
+          alt="Stylised artwork of a motorcycle"
+          widths={[320, 640, 960]}
+          sizes="(min-width: 832px) 24rem, 100vw"
+          loading="lazy"
+        />
+        <h3>Motorcycles</h3>
+        <p>
+          I enjoy riding and tinkering with motorcycles: practical, mechanical,
+          and a good reason to work with my hands.
+        </p>
+      </article>
+      <article>
+        <Image
+          src={sailing}
+          alt="Stylised artwork of a sailing boat on the water"
+          widths={[320, 640, 960]}
+          sizes="(min-width: 832px) 24rem, 100vw"
+          loading="lazy"
+        />
+        <h3>Sailing and boats</h3>
+        <p>
+          Time on the water is my reset. Boats are another kind of system to
+          understand, maintain and get right.
+        </p>
+      </article>
+      <article>
+        <a class="beyond__riptide" href={RIPTIDE.url}>
+          <span>{RIPTIDE.name}</span>
+        </a>
+        <h3>{RIPTIDE.name}</h3>
+        <p>
+          My app studio, where I build small, private, useful apps. PainTrail
+          is the first.
+        </p>
+        <p>
+          <a class="link-more" href={RIPTIDE.url}>riptidedigital.com.au</a>
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <!-- A PRINCIPLE -->
+  <section class="section wrap">
+    <blockquote>
+      <p>
+        “Understand the process before you try to improve it. Automating a messy
+        routine just produces a faster mess.”
+      </p>
+      <footer class="meta">A principle that shapes most of how I work.</footer>
+    </blockquote>
+  </section>
+
+  <!-- FIND ME (this section replaces the old Links page in the nav) -->
+  <section class="section wrap" id="links">
+    <h2 class="section-title">Find me</h2>
+    <ul class="ledger">
+      <li class="pair pair--link">
+        <h3><a href={RIPTIDE.aboutUrl} rel="me">{RIPTIDE.name}</a></h3>
+        <p>My app studio, and the page about who runs it.</p>
+      </li>
+      {
+        SOCIAL_LINKS.map((link) => (
+          <li class="pair pair--link">
+            <h3>
+              <a
+                href={link.href}
+                {...(link.href.startsWith('http')
+                  ? { target: '_blank', rel: 'me noopener noreferrer' }
+                  : {})}
+              >
+                {link.label}
+              </a>
+            </h3>
+            <p>{linkNotes[link.label] ?? ''}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
 </BaseLayout>
+
+<style>
+  /* Intro: text on the left, quick facts on the right */
+  .intro {
+    display: grid;
+    gap: 3rem;
+  }
+  .glance {
+    align-self: end;
+    border-top: 1px solid var(--color-border);
+    font-size: 0.9375rem;
+  }
+  .glance div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding-block: 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .glance dt {
+    color: var(--color-muted);
+  }
+  .glance dd {
+    color: var(--color-ink);
+    font-weight: 500;
+    text-align: right;
+  }
+
+  /* Heading on the left, reading text on the right */
+  .split {
+    display: grid;
+    gap: 1.5rem 2rem;
+  }
+  .text {
+    max-width: 60ch;
+    font-size: 1.125rem;
+    line-height: 1.65;
+  }
+  .text p + p {
+    margin-top: 1rem;
+  }
+  .text a:not(.link-more) {
+    color: var(--color-ink);
+    text-decoration: underline;
+    text-decoration-color: var(--color-accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+  }
+  .note {
+    max-width: 60ch;
+    margin-block: 1rem 2rem;
+  }
+
+  /* Ledger rows with a title and a line of text */
+  .pair h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  .pair p {
+    max-width: 60ch;
+  }
+  .pair--link {
+    position: relative;
+    transition: background-color 0.2s;
+  }
+  .pair--link:hover {
+    background: var(--color-surface);
+  }
+  .pair--link a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+  .pair--link:hover a {
+    text-decoration: underline;
+    text-decoration-color: var(--color-accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 5px;
+  }
+
+  /* Beyond work: three columns, no boxes */
+  .beyond {
+    display: grid;
+    gap: 3rem 2rem;
+    margin-top: 2rem;
+  }
+  .beyond :global(img),
+  .beyond__riptide {
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    border-radius: 2px;
+  }
+  .beyond__riptide {
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--color-border);
+    color: var(--color-ink);
+    font-family: var(--font-display);
+    font-stretch: 125%;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    transition: border-color 0.2s;
+  }
+  .beyond__riptide:hover {
+    border-color: var(--color-accent);
+  }
+  .beyond h3 {
+    margin-top: 1.25rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  .beyond p {
+    margin-top: 0.5rem;
+    font-size: 0.9375rem;
+  }
+
+  blockquote {
+    max-width: 30ch;
+    color: var(--color-ink);
+    font-family: var(--font-display);
+    font-stretch: 125%;
+    font-size: clamp(1.5rem, 2.5vw + 0.75rem, 2.5rem);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+  blockquote footer {
+    margin-top: 1.5rem;
+    font-family: var(--font-sans);
+    font-stretch: 100%;
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+
+  @media (min-width: 52rem) {
+    .intro {
+      grid-template-columns: minmax(0, 1.6fr) minmax(16rem, 1fr);
+    }
+    .split,
+    .pair {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 10fr);
+      align-items: baseline;
+    }
+    .pair--link {
+      padding-inline: 0.75rem;
+      margin-inline: -0.75rem;
+    }
+    .beyond {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+</style>

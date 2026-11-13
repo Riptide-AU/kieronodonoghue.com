@@ -1,30 +1,52 @@
 @import "tailwindcss";
 
 /*
-  Design tokens for kieronodonoghue.com
-  Direction: professional, calm, analytical. Deep slate base, off-white
-  content, a single muted blue-green accent. Mobile-first.
+  Design tokens for kieronodonoghue.com (redesign, direction A: "Build log").
+  Near-black base, off-white text and one sharp green accent used sparingly.
+  One typeface, Archivo, in two widths: wide for headings, normal for text.
+  Contrast ratios against --color-base are noted beside each text colour
+  (WCAG AA needs 4.5:1 for normal text).
+  Mobile-first.
 */
 @theme {
   /* Surfaces */
-  --color-base: #0d1320; /* deep slate/navy page background */
-  --color-surface: #131b2b; /* cards and raised panels */
-  --color-surface-2: #1a2436; /* hover / nested surfaces */
-  --color-border: #243047; /* hairline borders */
+  --color-base: #0a0c0b; /* page background: near-black with a trace of green */
+  --color-surface: #121514; /* raised panels and row hovers */
+  --color-surface-2: #181c1a; /* nested / hover surfaces */
+  --color-border: #262b28; /* hairlines */
+  --color-border-strong: #3a413d; /* emphasised borders */
 
   /* Text */
-  --color-ink: #e9eef6; /* off-white primary text */
-  --color-muted: #9babc4; /* secondary text */
+  --color-ink: #f1f4f2; /* headings, primary text (17.7:1) */
+  --color-ink-soft: #c3c9c5; /* body text (11.7:1) */
+  --color-muted: #8d9690; /* dates, meta, small text (6.4:1) */
+  --color-faint: #8d9690; /* same as muted: anything dimmer fails AA */
 
-  /* Accent: muted blue-green */
-  --color-accent: #5cc0ab;
-  --color-accent-strong: #3f9c8a;
-  --color-accent-soft: #1d3a39; /* tinted background for accent areas */
+  /* Accent: the one green. Use it for emphasis, not decoration. */
+  --color-accent: #3dfc8c; /* (14.5:1) */
+  --color-accent-strong: #2bd975; /* hover state (10.5:1) */
+  --color-accent-soft: #10271a; /* tinted background for accent areas */
+  --color-on-accent: #04140b; /* text on a green background (14.0:1) */
 
   /* Typography */
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system,
+  --font-sans: "Archivo Variable", ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: var(--font-sans);
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Radii: kept small and square-ish */
+  --radius-sm: 0.125rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.5rem;
+  --radius-2xl: 0.75rem;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 20px -6px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 18px 48px -12px rgba(0, 0, 0, 0.7);
+  --shadow-glow: var(--shadow-md); /* glow retired; kept so old classes work */
 
   /* Reading width */
   --container-prose: 44rem;
@@ -34,30 +56,41 @@ html {
   scroll-behavior: smooth;
   background-color: var(--color-base);
   color-scheme: dark;
+  scrollbar-color: var(--color-border) var(--color-base);
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
 }
 
 body {
-  /* Transparent so the fixed background canvas (behind content) shows through;
-     the solid base colour is painted by <html>. */
-  background-color: transparent;
-  color: var(--color-ink);
+  background-color: var(--color-base);
+  color: var(--color-ink-soft);
+  font-variant-numeric: tabular-nums;
   font-family: var(--font-sans);
+  font-synthesis-weight: none;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-/* Subtle data-inspired grid in the page background */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    linear-gradient(to right, rgba(92, 192, 171, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(92, 192, 171, 0.04) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse at top, black, transparent 75%);
+/* Display voice: the wide cut of Archivo. Applied with the `font-display`
+   utility and to every heading by default. */
+.font-display {
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  letter-spacing: -0.02em;
+}
+/* In the base layer so utility classes on a heading can still override it. */
+@layer base {
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-stretch: 125%;
+    letter-spacing: -0.02em;
+    color: var(--color-ink);
+  }
 }
 
 /* Visible focus styles for keyboard navigation */
@@ -74,13 +107,43 @@ body::before {
   top: 0;
   z-index: 100;
   background: var(--color-accent);
-  color: #06231f;
+  color: var(--color-on-accent);
   padding: 0.5rem 1rem;
   font-weight: 600;
   border-radius: 0 0 0.375rem 0;
 }
 .skip-link:focus {
   left: 0;
+}
+
+/*
+  Scroll reveal. Sections opt in with `data-reveal`; an IntersectionObserver in
+  BaseLayout adds `data-reveal="in"` when they enter the viewport. Staggered
+  children use `--reveal-delay`. Everything is neutralised under reduced motion.
+*/
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+[data-reveal="in"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Small label used above some headings on pages not yet redesigned.
+   Kept quiet (muted, no caps) until those pages are rebuilt. */
+.eyebrow {
+  font-family: var(--font-sans);
+  font-stretch: 100%;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--color-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -93,23 +156,130 @@ body::before {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 /*
-  Future animation hooks (not yet active — kept here so enhancements slot in
-  without restructuring):
-    - Page transitions: add Astro's <ClientRouter /> to BaseLayout's <head>.
-    - Scroll reveals: target a `[data-reveal]` attribute on sections; the
-      reduced-motion block above must continue to neutralise it.
-    - Grid / knowledge-network effects: the related-content links between
-      projects, writing, and ideas are the data source for these.
-  All motion must stay behind the prefers-reduced-motion guard above.
+  Shared building blocks for the redesigned pages.
+  In the components layer so utility classes can still override them.
 */
+@layer components {
+  /* Page column: the same width and side padding as the header and footer. */
+  .wrap {
+    width: 100%;
+    max-width: 76rem;
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 4vw, 3rem);
+  }
+
+  /* The one solid green button. Use at most one per page. */
+  .btn-accent {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 3rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-sm);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+    font-weight: 650;
+    transition: gap 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .btn-accent:hover {
+    gap: 1rem;
+  }
+
+  /* Text link with a thin green underline, e.g. "All writing". */
+  .link-more {
+    color: var(--color-ink);
+    font-size: 0.9375rem;
+    text-decoration: underline;
+    text-decoration-color: var(--color-accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 5px;
+    transition: text-underline-offset 0.2s;
+  }
+  .link-more:hover {
+    text-underline-offset: 8px;
+  }
+
+  /* Top of a section page: big title with an intro line under it. */
+  .page-head {
+    padding-block: clamp(3rem, 9vh, 6rem) 2rem;
+  }
+  .page-title {
+    font-size: clamp(2.25rem, 6vw, 4rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+  .lede {
+    max-width: 46ch;
+    margin-top: 1.5rem;
+    color: var(--color-ink);
+    font-size: clamp(1.125rem, 1vw + 0.9rem, 1.375rem);
+    line-height: 1.45;
+  }
+
+  /* A section of a page, with its heading. */
+  .section {
+    padding-block: 3.5rem;
+  }
+  .section-title {
+    font-size: clamp(1.5rem, 2vw + 1rem, 2.25rem);
+    font-weight: 650;
+    line-height: 1.1;
+  }
+  .section-title + .ledger,
+  .section-head + .ledger {
+    margin-top: 2rem;
+  }
+  /* Heading on the left, a "see all" link on the right. */
+  .section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem 2rem;
+  }
+
+  /* Small grey supporting text: dates, statuses, categories. */
+  .meta {
+    color: var(--color-muted);
+    font-size: 0.9375rem;
+  }
+
+  /* "Back to ..." link at the top of a detail page. */
+  .back-link {
+    display: inline-block;
+    padding-block: 0.5rem;
+    color: var(--color-muted);
+    font-size: 0.9375rem;
+    transition: color 0.2s;
+  }
+  .back-link:hover {
+    color: var(--color-ink);
+  }
+
+  /* The ledger: a list of rows separated by hairlines, instead of cards. */
+  .ledger {
+    border-top: 1px solid var(--color-border);
+  }
+  .ledger > li {
+    display: grid;
+    gap: 0.5rem 2rem;
+    padding-block: 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+}
 
 /*
   Readable prose for Markdown/MDX bodies (writing, projects, ideas).
-  Scoped to .prose so it never leaks into layout chrome. Tuned for the
-  dark theme rather than relying on a typography plugin.
+  Scoped to .prose so it never leaks into layout chrome.
 */
 .prose {
   color: var(--color-ink);
@@ -122,6 +292,7 @@ body::before {
 .prose h2 {
   margin-top: 2em;
   margin-bottom: 0.5em;
+  font-family: var(--font-display);
   font-size: 1.4rem;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -130,6 +301,7 @@ body::before {
 .prose h3 {
   margin-top: 1.6em;
   margin-bottom: 0.4em;
+  font-family: var(--font-display);
   font-size: 1.15rem;
   font-weight: 600;
   color: var(--color-ink);
@@ -137,7 +309,7 @@ body::before {
 .prose p,
 .prose ul,
 .prose ol {
-  color: color-mix(in srgb, var(--color-ink) 88%, transparent);
+  color: var(--color-ink-soft);
 }
 .prose a {
   color: var(--color-accent);
@@ -167,7 +339,7 @@ body::before {
   font-style: italic;
 }
 .prose code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.9em;
   background: var(--color-surface-2);
   padding: 0.15em 0.4em;

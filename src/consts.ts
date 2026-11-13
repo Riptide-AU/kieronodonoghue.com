@@ -9,42 +9,47 @@ export const SITE = {
   url: 'https://kieronodonoghue.com',
   /** Short positioning statement used in metadata and structured data. */
   description:
-    'Kieron O’Donoghue is a Corporate Services Analyst, Business Analytics graduate, and Bachelor of Commerce (Accounting) student based in Australia. He writes about business, technology, systems, analytics, AI, and the projects he is building.',
-  jobTitle: 'Corporate Services Analyst',
+    'Kieron O’Donoghue is a business analyst who builds things: apps, tools and systems that solve practical problems. He runs Riptide Digital, where he is building PainTrail, a pain diary app, and he writes fiction.',
+  jobTitle: 'Business Analyst',
   locale: 'en_AU',
   lang: 'en',
 } as const;
 
 /**
- * Animated background ("living knowledge network").
- * Settings flag so the effect can be turned on/off and the variant chosen.
- * Variants: 'grid' (animated data grid), 'network' (drifting node graph),
- * 'streams' (abstract matrix-inspired information streams), 'vertical-streams'
- * (more active, layered vertical data rain).
- * The effect always yields to prefers-reduced-motion. For quick comparison
- * you can also override the variant per-page with
- * ?bg=grid|network|streams|vertical-streams.
+ * The "Now" line on the home page. Update the date and text together
+ * whenever what you are working on changes.
  */
-export const BACKGROUND = {
-  enabled: true,
-  variant: 'vertical-streams' as
-    | 'grid'
-    | 'network'
-    | 'streams'
-    | 'vertical-streams',
+export const NOW = {
+  date: '2026-11-13',
+  text: 'Building PainTrail and setting up Riptide Digital.',
 } as const;
 
-/** Primary navigation. Order matters. */
+/**
+ * Primary navigation. Order matters.
+ */
 export const NAV = [
   { label: 'Home', href: '/' },
-  { label: 'About', href: '/about/' },
-  { label: 'Work', href: '/work/' },
-  { label: 'Projects', href: '/projects/' },
+  { label: 'Building', href: '/building/' },
   { label: 'Writing', href: '/writing/' },
-  { label: 'Ideas', href: '/ideas/' },
   { label: 'Books', href: '/books/' },
-  { label: 'Links', href: '/links/' },
+  { label: 'About', href: '/about/' },
 ] as const;
+
+/**
+ * Riptide Digital, Kieron's app business.
+ * If `live` is set to false the site shows "coming soon" instead of a link.
+ */
+export const RIPTIDE = {
+  name: 'Riptide Digital',
+  url: 'https://riptidedigital.com.au',
+  /**
+   * The business site's About page, which names Kieron as the owner and
+   * links back here. Linking to it with rel="me" (footer, About and Links
+   * pages) helps Google see that both sites belong to the same person.
+   */
+  aboutUrl: 'https://riptidedigital.com.au/about/',
+  live: true,
+} as const;
 
 export const CONTACT_EMAIL = 'kieron_o@outlook.com';
 

@@ -1,0 +1,7 @@
+# Redirects for pages retired in the redesign (Cloudflare Pages).
+/work /about/ 301
+/work/ /about/ 301
+/projects /building/ 301
+/projects/* /building/:splat 301
+/ideas /writing/ 301
+/ideas/* /writing/:splat 301

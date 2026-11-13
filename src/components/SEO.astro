@@ -1,5 +1,5 @@
 ---
-import { SITE, SOCIAL_LINKS, CONTACT_EMAIL } from '../consts';
+import { SITE, SOCIAL_LINKS, CONTACT_EMAIL, RIPTIDE } from '../consts';
 
 interface Props {
   /** Page-specific title. Combined with the site name unless `titleOverride`. */
@@ -37,9 +37,18 @@ const canonical = new URL(Astro.url.pathname, SITE.url).href;
 const ogImage = image ? new URL(image, SITE.url).href : undefined;
 
 // Person structured data (sameAs links profiles for brand/entity association).
-const sameAs = SOCIAL_LINKS.filter((l) => l.href.startsWith('http')).map(
-  (l) => l.href,
-);
+const sameAs = [
+  RIPTIDE.url,
+  RIPTIDE.aboutUrl,
+  ...SOCIAL_LINKS.filter((l) => l.href.startsWith('http')).map((l) => l.href),
+];
+
+// Riptide Digital, so search engines connect Kieron with the business.
+const riptideOrg = {
+  '@type': 'Organization',
+  name: RIPTIDE.name,
+  url: RIPTIDE.url,
+};
 
 const personSchema = {
   '@context': 'https://schema.org',
@@ -48,6 +57,8 @@ const personSchema = {
   url: SITE.url,
   jobTitle: SITE.jobTitle,
   email: `mailto:${CONTACT_EMAIL}`,
+  worksFor: riptideOrg,
+  founder: riptideOrg,
   sameAs,
 };
 
