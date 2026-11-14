@@ -5,8 +5,8 @@
   The top layer is the black-and-white portrait (a normal optimised image).
   A canvas on top paints the helmet photo through a soft-edged "window" that
   follows the pointer and leaves a short fading trail. When the pointer has
-  been still for a moment, the window drifts in a slow figure-eight around
-  the head instead.
+  been still for a moment, the window drifts in a slow figure-eight over
+  the head, chest and shoulders instead.
 
   The two photos share the same 1024x1280 frame, so they line up exactly.
   With "reduce motion" switched on, only the static portrait is shown and
@@ -14,7 +14,7 @@
 */
 import { Image, getImage } from 'astro:assets';
 import portrait from '../assets/images/hero/portrait-bw.jpg';
-import helmet from '../assets/images/hero/helmet.jpg';
+import helmet from '../assets/images/hero/helmet-jacket.jpg';
 import { SITE } from '../consts';
 
 interface Props {
@@ -42,13 +42,13 @@ const helmetImage = await getImage({ src: helmet, width: 1024, format: 'webp' })
 <script is:inline>
   (() => {
     // ---------- Tunables ----------
-    const REVEAL_RADIUS = 0.26; // size of the window, as a fraction of the portrait's width
+    const REVEAL_RADIUS = 0.3; // size of the window, as a fraction of the portrait's width
     const TRAIL_FADE = 0.9; // seconds the trail takes to fade away
     const IDLE_DELAY = 2000; // milliseconds without pointer movement before the idle loop starts
     const IDLE_SPEED = 0.7; // idle loop speed; one full figure-eight takes about 9 seconds
     const FOLLOW_EASE = 8; // how quickly the window catches up with the pointer (higher = snappier)
     // The idle figure-eight, as fractions of the frame: centre, half-width, half-height.
-    const IDLE_PATH = { x: 0.5, y: 0.33, w: 0.2, h: 0.11 };
+    const IDLE_PATH = { x: 0.5, y: 0.42, w: 0.28, h: 0.2 };
 
     const root = document.querySelector('.reveal');
     const portrait = root && root.querySelector('img');
