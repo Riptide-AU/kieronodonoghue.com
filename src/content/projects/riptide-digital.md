@@ -1,6 +1,6 @@
 ---
 title: "Riptide Digital"
-description: "My independent app studio. It makes small, private, useful apps, starting with PainTrail."
+description: "My independent app and game studio in Newcastle, NSW. It makes small, private, useful apps, starting with PainTrail, and small mobile games."
 status: "Ongoing"
 date: 2026-11-12
 tools: ["Flutter", "Astro"]
@@ -12,8 +12,10 @@ link: "https://riptidedigital.com.au"
 
 ## Overview
 
-Riptide Digital is my independent app studio, based in Newcastle, NSW. It is where I
-build and publish apps under one name. PainTrail, a pain diary, is the first.
+Riptide Digital is my independent app and game studio, based in Newcastle, NSW. It is
+where I build and publish apps under one name. It has two sides: utility apps, starting
+with PainTrail, a pain diary, and small mobile games. I wrote about why I started it in
+[Starting Riptide Digital](/writing/starting-riptide-digital/).
 
 ## Context
 

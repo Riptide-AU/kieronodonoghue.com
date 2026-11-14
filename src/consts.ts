@@ -9,8 +9,13 @@ export const SITE = {
   url: 'https://kieronodonoghue.com',
   /** Short positioning statement used in metadata and structured data. */
   description:
-    'Kieron O’Donoghue is a business analyst who builds things: apps, tools and systems that solve practical problems. He runs Riptide Digital, where he is building PainTrail, a pain diary app, and he writes fiction.',
+    'Kieron O’Donoghue is a business analyst in Newcastle, NSW, who builds things: apps, tools and systems that solve practical problems. He runs Riptide Digital, a small app and game studio, where he is building PainTrail, a pain diary app, and he writes fiction.',
   jobTitle: 'Business Analyst',
+  /** Where Kieron is based. Feeds the Person schema so searches for his
+   *  name with Newcastle find this site. */
+  locality: 'Newcastle',
+  region: 'NSW',
+  country: 'AU',
   locale: 'en_AU',
   lang: 'en',
 } as const;
