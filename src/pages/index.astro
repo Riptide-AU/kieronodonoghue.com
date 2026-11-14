@@ -2,7 +2,7 @@
 import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import HeroRain from '../components/HeroRain.astro';
+import HeroReveal from '../components/HeroReveal.astro';
 import PlaceholderCover from '../components/PlaceholderCover.astro';
 import PostRow from '../components/PostRow.astro';
 import ProjectRow from '../components/ProjectRow.astro';
@@ -44,38 +44,40 @@ const bookStatus = (status: string) =>
 >
   <!-- HERO -->
   <section class="hero wrap" aria-label="Introduction">
-    <HeroRain />
+    <HeroReveal class="hero__portrait" />
 
-    <h1>Kieron<br />O’Donoghue</h1>
+    <div class="hero__text">
+      <h1>Kieron<br />O’Donoghue</h1>
 
-    <p class="hero__lede">
-      I’m a business analyst who builds things: apps, tools and systems that
-      solve practical problems.
-    </p>
+      <p class="hero__lede">
+        I’m a business analyst who builds things: apps, tools and systems that
+        solve practical problems.
+      </p>
 
-    <div class="hero__actions">
-      <a class="btn-accent" href="/building/">
-        What I’m building
-        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-          <path
-            d="M3 8h10M9 4l4 4-4 4"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.75"></path>
-        </svg>
-      </a>
-      {
-        RIPTIDE.live ? (
-          <a class="link-more hero__riptide" href={RIPTIDE.url}>
-            {RIPTIDE.name}
-          </a>
-        ) : (
-          <span class="hero__riptide">
-            {RIPTIDE.name}
-            <span class="hero__soon">site coming soon</span>
-          </span>
-        )
-      }
+      <div class="hero__actions">
+        <a class="btn-accent" href="/building/">
+          What I’m building
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+            <path
+              d="M3 8h10M9 4l4 4-4 4"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"></path>
+          </svg>
+        </a>
+        {
+          RIPTIDE.live ? (
+            <a class="link-more hero__riptide" href={RIPTIDE.url}>
+              {RIPTIDE.name}
+            </a>
+          ) : (
+            <span class="hero__riptide">
+              {RIPTIDE.name}
+              <span class="hero__soon">site coming soon</span>
+            </span>
+          )
+        }
+      </div>
     </div>
 
     <p class="hero__now">
@@ -173,13 +175,23 @@ const bookStatus = (status: string) =>
 
 <style>
   /* ---------- Hero ---------- */
+  /* Phones: the portrait sits at the top and the text overlaps its lower
+     part. Wider screens (see the bottom of this file): text on the left,
+     portrait on the right. */
   .hero {
     position: relative;
     isolation: isolate;
-    padding-block: clamp(4rem, 12vh, 8rem) 4.5rem;
+    padding-block: 0 4.5rem;
+  }
+  .hero :global(.hero__portrait) {
+    z-index: -1;
+    margin-inline: calc(clamp(1.25rem, 4vw, 3rem) * -1);
+  }
+  .hero__text {
+    margin-top: -22%;
   }
   h1 {
-    font-size: clamp(2.6rem, 11vw, 6rem);
+    font-size: clamp(2.6rem, 11vw, 5.5rem);
     font-weight: 700;
     line-height: 0.95;
     letter-spacing: -0.035em;
@@ -268,6 +280,31 @@ const bookStatus = (status: string) =>
   }
 
   @media (min-width: 52rem) {
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 30rem);
+      align-items: center;
+      column-gap: 1rem;
+      padding-top: 1.5rem;
+    }
+    .hero :global(.hero__portrait) {
+      grid-column: 2;
+      grid-row: 1;
+      margin-inline: 0;
+    }
+    .hero__text {
+      grid-column: 1;
+      grid-row: 1;
+      margin-top: 0;
+    }
+    /* The name may run a little over the portrait's faded left edge */
+    h1 {
+      white-space: nowrap;
+    }
+    .hero__now {
+      grid-column: 1 / -1;
+      margin-top: 2rem;
+    }
     .books {
       grid-template-columns: minmax(0, 1fr) auto;
       align-items: end;
