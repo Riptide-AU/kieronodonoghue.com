@@ -115,6 +115,16 @@ const books = defineCollection({
       description: z.string().optional(),
       /** Retailer purchase link (Amazon). Absent for forthcoming books. */
       buyLink: z.string().url().optional(),
+      /** The book's own Goodreads page. Shown as a link and listed in the
+       *  Book schema's sameAs. */
+      goodreadsLink: z.string().url().optional(),
+      /**
+       * Other pages that are this same book: the full Amazon product URLs
+       * (amazon.com.au/dp/…, amazon.com/dp/…), Apple Books, etc. Listed in
+       * the Book schema's sameAs so Google ties those listings to this page
+       * and to Kieron. Not shown on the page.
+       */
+      sameAs: z.array(z.string().url()).default([]),
       /**
        * Placeholder cover treatment for books with no artwork yet:
        * 'steel' (silver/blue, "Coming Soon") or 'locked' (gold/ivory/black,
