@@ -64,7 +64,7 @@ export const RIPTIDE = {
    * record and the Organization schema lists it, which gives that
    * business.gov.au page a link from this site and ties it to Kieron.
    */
-  abn: '',
+  abn: '46630068322',
 } as const;
 
 /** Public ABN Lookup record for Riptide Digital, or undefined if no ABN. */
