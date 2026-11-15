@@ -5,7 +5,7 @@ import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import BookCover from '../../components/BookCover.astro';
 import PlaceholderCover from '../../components/PlaceholderCover.astro';
-import { SITE } from '../../consts';
+import { SITE, PERSON_ID } from '../../consts';
 
 export const getStaticPaths = (async () => {
   const books = await getCollection('books', (b) => !b.data.draft);
@@ -57,6 +57,15 @@ const coverUrl = data.coverImage
   ? new URL(data.coverImage.src, SITE.url).href
   : undefined;
 
+// Other listings of this same book (Amazon, Goodreads, …), de-duplicated.
+const bookSameAs = [
+  ...new Set(
+    [data.buyLink, data.goodreadsLink, ...data.sameAs].filter(
+      (u): u is string => Boolean(u),
+    ),
+  ),
+];
+
 // schema.org Book — associates Kieron O'Donoghue, the title, the series and
 // genre. `creativeWorkStatus` records the lifecycle stage; forthcoming books
 // deliberately omit offers/bookFormat/datePublished so they are never
@@ -72,6 +81,7 @@ const bookSchema = {
   genre: data.genre,
   author: {
     '@type': 'Person',
+    '@id': PERSON_ID,
     name: data.author,
     url: SITE.url,
   },
@@ -87,6 +97,7 @@ const bookSchema = {
   ...(data.publishedDate && {
     datePublished: data.publishedDate.toISOString().slice(0, 10),
   }),
+  ...(bookSameAs.length > 0 && { sameAs: bookSameAs }),
   ...(data.buyLink && {
     offers: {
       '@type': 'Offer',
@@ -163,6 +174,16 @@ const bookSchema = {
                   </svg>
                   Buy on Amazon
                 </a>
+                {data.goodreadsLink && (
+                  <a
+                    href={data.goodreadsLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="ml-2 inline-flex items-center rounded-md border border-border px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-accent/60 hover:text-accent"
+                  >
+                    Goodreads
+                  </a>
+                )}
               </div>
             )}
           </>
@@ -250,6 +271,18 @@ const bookSchema = {
               A sample chapter from {data.title} will be published here soon. In
               the meantime, you can read the opening on Amazon.
             </p>
+          )}
+          {data.buyLink && (
+            <div class="mt-6 border-t border-border pt-6">
+              <a
+                href={data.buyLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-strong"
+              >
+                Keep reading {data.title} on Amazon &rarr;
+              </a>
+            </div>
           )}
         </div>
       </section>

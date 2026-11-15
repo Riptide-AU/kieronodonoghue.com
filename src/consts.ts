@@ -20,6 +20,10 @@ export const SITE = {
   lang: 'en',
 } as const;
 
+/** Stable structured-data id for Kieron. Books, articles and the business
+ *  point at this so Google treats them as one person (one entity). */
+export const PERSON_ID = `${SITE.url}/#person`;
+
 /**
  * The "Now" line on the home page. Update the date and text together
  * whenever what you are working on changes.
@@ -54,7 +58,25 @@ export const RIPTIDE = {
    */
   aboutUrl: 'https://riptidedigital.com.au/about/',
   live: true,
+  /**
+   * Australian Business Number, digits only (e.g. '12345678901'). Leave
+   * empty to hide it. When set, the footer links to the public ABN Lookup
+   * record and the Organization schema lists it, which gives that
+   * business.gov.au page a link from this site and ties it to Kieron.
+   */
+  abn: '',
 } as const;
+
+/** Public ABN Lookup record for Riptide Digital, or undefined if no ABN. */
+export const ABN_LOOKUP_URL = RIPTIDE.abn
+  ? `https://abr.business.gov.au/ABN/View/${RIPTIDE.abn}`
+  : undefined;
+
+/** "12 345 678 901": the way an ABN is normally written. */
+export const ABN_DISPLAY = RIPTIDE.abn.replace(
+  /^(\d{2})(\d{3})(\d{3})(\d{3})$/,
+  '$1 $2 $3 $4',
+);
 
 export const CONTACT_EMAIL = 'kieron_o@outlook.com';
 

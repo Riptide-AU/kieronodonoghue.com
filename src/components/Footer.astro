@@ -1,5 +1,5 @@
 ---
-import { SITE, SOCIAL_LINKS, RIPTIDE } from '../consts';
+import { SITE, SOCIAL_LINKS, RIPTIDE, ABN_LOOKUP_URL, ABN_DISPLAY } from '../consts';
 
 const year = new Date().getFullYear();
 ---
@@ -48,6 +48,24 @@ const year = new Date().getFullYear();
       </li>
     </ul>
 
-    <p class="text-[0.8125rem] text-muted">&copy; {year} {SITE.name}</p>
+    <p class="text-[0.8125rem] text-muted">
+      &copy; {year} {SITE.name}
+      {
+        ABN_LOOKUP_URL && (
+          <>
+            {' · '}
+            {RIPTIDE.name}, ABN{' '}
+            <a
+              href={ABN_LOOKUP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="transition-colors hover:text-accent"
+            >
+              {ABN_DISPLAY}
+            </a>
+          </>
+        )
+      }
+    </p>
   </div>
 </footer>
