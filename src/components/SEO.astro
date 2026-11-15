@@ -1,5 +1,12 @@
 ---
-import { SITE, SOCIAL_LINKS, CONTACT_EMAIL, RIPTIDE } from '../consts';
+import {
+  SITE,
+  SOCIAL_LINKS,
+  CONTACT_EMAIL,
+  RIPTIDE,
+  PERSON_ID,
+  ABN_LOOKUP_URL,
+} from '../consts';
 
 interface Props {
   /** Page-specific title. Combined with the site name unless `titleOverride`. */
@@ -44,15 +51,29 @@ const sameAs = [
 ];
 
 // Riptide Digital, so search engines connect Kieron with the business.
+// The ABN Lookup record is listed in sameAs so the business.gov.au page is
+// tied to the same entity as this site and riptidedigital.com.au.
 const riptideOrg = {
   '@type': 'Organization',
+  '@id': `${RIPTIDE.url}/#organization`,
   name: RIPTIDE.name,
   url: RIPTIDE.url,
+  founder: { '@id': PERSON_ID },
+  ...(RIPTIDE.abn && {
+    taxID: RIPTIDE.abn,
+    identifier: {
+      '@type': 'PropertyValue',
+      propertyID: 'ABN',
+      value: RIPTIDE.abn,
+    },
+    sameAs: [ABN_LOOKUP_URL],
+  }),
 };
 
 const personSchema = {
   '@context': 'https://schema.org',
   '@type': 'Person',
+  '@id': PERSON_ID,
   name: SITE.name,
   url: SITE.url,
   jobTitle: SITE.jobTitle,
@@ -67,7 +88,6 @@ const personSchema = {
     },
   },
   worksFor: riptideOrg,
-  founder: riptideOrg,
   sameAs,
 };
 
@@ -88,7 +108,7 @@ const articleSchema =
         headline: title ?? SITE.name,
         description,
         url: canonical,
-        author: { '@type': 'Person', name: SITE.name, url: SITE.url },
+        author: { '@type': 'Person', '@id': PERSON_ID, name: SITE.name, url: SITE.url },
         ...(publishedDate && { datePublished: publishedDate.toISOString() }),
         ...(modifiedDate && { dateModified: modifiedDate.toISOString() }),
         ...(ogImage && { image: ogImage }),

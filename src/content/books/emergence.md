@@ -5,7 +5,8 @@ bookNumber: 1
 author: "Kieron O’Donoghue"
 genre: ["Fantasy", "Epic Fantasy"]
 description: "Emergence is book one of the Soul War Saga, an epic fantasy novel by Kieron O’Donoghue. Sixteen-year-old Envy Black settles in a small Australian town and discovers the darkness awakening inside her is anything but human."
-buyLink: "https://amzn.asia/d/059FUOtC"
+buyLink: "https://www.amazon.com.au/Emergence-Soul-War-Saga-Book-ebook/dp/B0H3PBY457"
+goodreadsLink: "https://www.goodreads.com/book/show/252990271"
 coverImage: "../../assets/images/books/emergence/Front_Cover_2.0.png"
 coverImageAlt: "Cover of Emergence, book one of the Soul War Saga by Kieron O’Donoghue: a young woman with one green eye and one glowing red eye, holding a golden amulet, against a dark fiery sky."
 insideCoverImage: "../../assets/images/books/emergence/Inside_Cover.png"
